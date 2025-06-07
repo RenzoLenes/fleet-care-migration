@@ -1,26 +1,342 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* Colores base del sistema */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  
+  /* Charts */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  
+  /* Colores personalizados FleetCare */
+  --color-seasalt: var(--seasalt);
+  --color-alice-blue: var(--alice-blue);
+  --color-powder-blue: var(--powder-blue);
+  --color-ruddy-blue: var(--ruddy-blue);
+  --color-ruddy-blue-2: var(--ruddy-blue-2);
+  
+  /* Radius */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --radius: 1rem;
+  
+  /* Sistema de colores usando OKLCH - Modo Claro */
+  --background: oklch(0.98 0.005 240); /* seasalt en OKLCH */
+  --foreground: oklch(0.15 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.15 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0 0);
+  --primary: oklch(62.3% 0.214 259.815); /* ruddy-blue en OKLCH */
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.92 0.02 240); /* alice-blue en OKLCH */
+  --secondary-foreground: oklch(0.20 0 0);
+  --muted: oklch(0.92 0.02 240); /* alice-blue en OKLCH */
+  --muted-foreground: oklch(0.45 0 0);
+  --accent: oklch(0.80 0.08 240); /* powder-blue en OKLCH */
+  --accent-foreground: oklch(0.20 0 0);
+  --destructive: oklch(0.60 0.24 27);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.92 0.02 240); /* alice-blue en OKLCH */
+  --input: oklch(0.92 0.02 240); /* alice-blue en OKLCH */
+  --ring: oklch(0.70 0.12 240); /* ruddy-blue en OKLCH */
+  
+  /* Charts con paleta FleetCare */
+  --chart-1: oklch(0.70 0.12 240); /* ruddy-blue */
+  --chart-2: oklch(0.80 0.08 240); /* powder-blue */
+  --chart-3: oklch(0.45 0.10 210);
+  --chart-4: oklch(0.75 0.15 60);
+  --chart-5: oklch(0.70 0.18 30);
+  
+  /* Colores personalizados FleetCare en OKLCH */
+  --seasalt: oklch(0.98 0.005 240);
+  --alice-blue: oklch(0.92 0.02 240);
+  --powder-blue: oklch(0.80 0.08 240);
+  --ruddy-blue: oklch(0.70 0.12 240);
+  --ruddy-blue-2: oklch(0.66 0.14 240);
+}
+
+.dark {
+  /* Sistema de colores usando OKLCH - Modo Oscuro */
+  --background: oklch(0.12 0.002 240); /* Negro ligeramente azulado */
+  --foreground: oklch(0.98 0.005 240); /* Blanco casi puro */
+  --card: oklch(0.18 0.003 240); /* Gris muy oscuro */
+  --card-foreground: oklch(0.98 0.005 240);
+  --popover: oklch(0.18 0.003 240);
+  --popover-foreground: oklch(0.98 0.005 240);
+  --primary: oklch(0.70 0.12 240); /* Mismo ruddy-blue pero más brillante para contraste */
+  --primary-foreground: oklch(0.98 0.005 240);
+  --secondary: oklch(0.22 0.01 240); /* Gris oscuro con toque azul */
+  --secondary-foreground: oklch(0.90 0.01 240); /* Blanco ligeramente más suave */
+  --muted: oklch(0.20 0.01 240);
+  --muted-foreground: oklch(0.65 0.01 240); /* Gris medio para texto secundario */
+  --accent: oklch(0.25 0.02 240);
+  --accent-foreground: oklch(0.90 0.01 240);
+  --destructive: oklch(0.65 0.20 25); /* Rojo más brillante para modo oscuro */
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.25 0.01 240); /* Borde más claro que el fondo */
+  --input: oklch(0.20 0.01 240);
+  --ring: oklch(0.70 0.12 240); /* Igual que primary para consistencia */
+  
+  /* Charts para modo oscuro - más brillantes para contraste */
+  --chart-1: oklch(0.70 0.12 240); /* ruddy-blue */
+  --chart-2: oklch(0.75 0.10 240); /* powder-blue más brillante */
+  --chart-3: oklch(0.65 0.15 210); /* Azul verdoso */
+  --chart-4: oklch(0.70 0.18 60); /* Amarillo más brillante */
+  --chart-5: oklch(0.75 0.20 30); /* Rojo anaranjado */
+  
+  /* Colores personalizados FleetCare para modo oscuro */
+  --seasalt: oklch(0.20 0.01 240); /* Gris oscuro en lugar de blanco */
+  --alice-blue: oklch(0.25 0.02 240); /* Gris azulado más oscuro */
+  --powder-blue: oklch(0.75 0.10 240); /* Más brillante para contraste */
+  --ruddy-blue: oklch(0.70 0.12 240); /* Igual que primary */
+  --ruddy-blue-2: oklch(0.65 0.14 240); /* Versión más saturada */
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .fleetcare-card {
+    @apply bg-gradient-to-br from-card to-muted/50 border border-border rounded-2xl;
+  }
+  
+  .fleetcare-table {
+    @apply bg-gradient-to-br from-card to-muted/50 border border-border;
+  }
+
+  .fleetcare-button-primary {
+    @apply bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200;
+  }
+
+  .fleetcare-button-secondary {
+    @apply bg-card/80 backdrop-blur-sm border border-border text-foreground hover:bg-muted hover:border-border/80 transition-all duration-200;
+  }
+
+  .status-critical {
+    @apply bg-gradient-to-r from-destructive to-destructive/90 text-destructive-foreground;
+  }
+
+  .status-warning {
+    @apply bg-gradient-to-r from-amber-500 to-amber-600 text-white;
+  }
+
+  .status-ok {
+    @apply bg-gradient-to-r from-green-500 to-green-600 text-white;
+  }
+
+  .status-offline {
+    @apply bg-gradient-to-r from-muted-foreground to-muted-foreground/80 text-card;
+  }
+
+  .alert-glow {
+    @apply animate-pulse shadow-lg shadow-destructive/25;
+  }
+
+  .metric-card {
+    @apply bg-gradient-to-br from-card to-muted/50 border border-border rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02];
+  }
+
+  .sidebar-item {
+    @apply overflow-hidden rounded-xl transition-all duration-200 hover:bg-muted/50;
+  }
+
+  .sidebar-item.active {
+    @apply bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-md;
+  }
+
+  .sidebar-item.active::before {
+    content: "";
+    @apply absolute left-0 top-0 w-1 h-full bg-primary-foreground rounded-r-full;
+  }
+
+  /* Estilos personalizados para el Switch en modo oscuro */
+  .fleetcare-switch {
+    @apply relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .fleetcare-switch[data-state="checked"] span[data-state] {
+    border-color: rgba(255, 255, 255, 0.3) !important;
+  }
+
+  .fleetcare-switch[data-state="unchecked"] span[data-state] {
+    border-color: rgba(255, 255, 255, 0.15) !important;
+  }
+
+  /* Mejoras adicionales para modo oscuro */
+  .dark .fleetcare-card {
+    @apply shadow-xl shadow-black/20;
+  }
+
+  .dark .metric-card {
+    @apply shadow-xl shadow-black/30;
+  }
+
+  .dark .fleetcare-button-primary {
+    @apply shadow-lg shadow-primary/20;
+  }
+
+  .dark .status-warning {
+    @apply bg-gradient-to-r from-yellow-500 to-yellow-600;
+  }
+
+  .dark .status-ok {
+    @apply bg-gradient-to-r from-emerald-500 to-emerald-600;
+  }
+}
+
+@layer utilities {
+  .bg-seasalt {
+    background-color: oklch(var(--seasalt));
+  }
+
+  .bg-alice-blue {
+    background-color: oklch(var(--alice-blue));
+  }
+
+  .bg-powder-blue {
+    background-color: oklch(var(--powder-blue));
+  }
+
+  .bg-ruddy-blue {
+    background-color: oklch(var(--ruddy-blue));
+  }
+
+  .bg-ruddy-blue-2 {
+    background-color: oklch(var(--ruddy-blue-2));
+  }
+
+  .text-ruddy-blue {
+    color: oklch(var(--ruddy-blue));
+  }
+
+  .text-ruddy-blue-2 {
+    color: oklch(var(--ruddy-blue-2));
+  }
+
+  .border-alice-blue {
+    border-color: oklch(var(--alice-blue));
+  }
+
+  .border-seasalt{
+    border-color: oklch(var(--color-seasalt))
+  }
+  
+  .border-powder-blue {
+    border-color: oklch(var(--powder-blue));
+  }
+
+  /* Utilidades adicionales para modo oscuro */
+  .dark-shadow {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  }
+
+  .dark-glow {
+    box-shadow: 0 0 20px rgba(var(--primary), 0.3);
+  }
+}
+
+/* Custom scrollbar mejorado para modo oscuro */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: oklch(var(--muted));
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: oklch(var(--primary));
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(var(--primary) / 0.8);
+}
+
+/* Scrollbar específico para modo oscuro */
+.dark ::-webkit-scrollbar-track {
+  background: oklch(0.15 0.005 240);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: oklch(0.75 0.16 240);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.80 0.18 240);
+}
+
+/* Smooth transitions para cambio de tema */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Mejoras de contraste para elementos específicos en modo oscuro */
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark textarea,
+.dark select {
+  background-color: oklch(0.12 0.005 240);
+  border-color: oklch(0.22 0.01 240);
+  color: oklch(0.95 0.005 240);
+}
+
+.dark input[type="text"]:focus,
+.dark input[type="email"]:focus,
+.dark input[type="password"]:focus,
+.dark textarea:focus,
+.dark select:focus {
+  border-color: oklch(0.75 0.16 240);
+  box-shadow: 0 0 0 2px oklch(0.75 0.16 240 / 0.2);
+}
+
+/* Mejora del contraste para texto en elementos interactivos */
+.dark button,
+.dark a {
+  color: oklch(0.90 0.01 240);
+}
+
+.dark button:hover,
+.dark a:hover {
+  color: oklch(0.95 0.005 240);
 }
