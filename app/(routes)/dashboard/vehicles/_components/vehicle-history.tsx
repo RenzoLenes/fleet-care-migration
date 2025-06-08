@@ -16,6 +16,7 @@ interface VehicleHistoryProps {
   vehicleId: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function VehicleHistory({ vehicleId }: VehicleHistoryProps) {
   return (
     <Card className='fleetcare-card'>

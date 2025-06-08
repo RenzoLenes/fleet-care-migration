@@ -82,7 +82,7 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
       setConnectionProgress(0);
       setIsConnecting(false);
     }
-  }, []);
+  }, [active]);
 
   useEffect(() => {
     if (active && !dataFlow && connectionProgress < 100) {
@@ -109,7 +109,7 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
       setConnectionProgress(0);
       setIsConnecting(false);
     }
-  }, [active]);
+  }, [active, dataFlow, connectionProgress]);
 
   const handleToggle = () => {
     const newState = !active;
