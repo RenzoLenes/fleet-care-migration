@@ -9,41 +9,83 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
+import { Tenant } from './dashboard-view';
 
 interface SimulationControlProps {
   active: boolean;
   onToggle: (active: boolean) => void;
+  tenant: Tenant;
 }
 
-export function SimulationControl({ active, onToggle }: SimulationControlProps) {
-  const [dataFlow, setDataFlow] = useState(active); // Inicializar con el estado actual
-  const [activeSensors, setActiveSensors] = useState(active ? 98 : 0); // Inicializar según el estado
-  const [connectionProgress, setConnectionProgress] = useState(active ? 100 : 0); // Ya conectado si está activo
+export function SimulationControl({ active, onToggle, tenant }: SimulationControlProps) {
+  const [dataFlow, setDataFlow] = useState(active);
+  const [activeSensors, setActiveSensors] = useState(active ? 98 : 0);
+  const [connectionProgress, setConnectionProgress] = useState(active ? 100 : 0);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isSendingWebhook, setIsSendingWebhook] = useState(false);
 
   const totalSensors = 127;
 
+  // Función para enviar webhook a través de nuestra API route
+  const sendWebhookToN8n = async (status: boolean) => {
+    setIsSendingWebhook(true);
+
+    try {
+      const response = await fetch('/api/simulation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: status ? 'activado' : 'desactivado',
+          sensor_count: status ? activeSensors : 0,
+          tenant: tenant,
+
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || `Error HTTP: ${response.status}`);
+      }
+
+      if (result.success) {
+        toast.success('Estado enviado a n8n', {
+          description: result.message
+        });
+      } else {
+        toast.error('Error al comunicar con n8n', {
+          description: result.error || 'Error desconocido'
+        });
+      }
+
+    } catch (error) {
+      console.error('Error enviando webhook:', error);
+      toast.error('Error al comunicar con n8n', {
+        description: error instanceof Error ? error.message : 'Error desconocido'
+      });
+    } finally {
+      setIsSendingWebhook(false);
+    }
+  };
+
   useEffect(() => {
-    // Sincronizar el estado interno con el estado externo al montar el componente
     if (active) {
-      // Si ya está activo externamente, configurar todo como conectado
       setDataFlow(true);
       setActiveSensors(98);
       setConnectionProgress(100);
       setIsConnecting(false);
     } else {
-      // Si está inactivo, resetear todo
       setDataFlow(false);
       setActiveSensors(0);
       setConnectionProgress(0);
       setIsConnecting(false);
     }
-  }, []); // Solo al montar el componente
+  }, []);
 
   useEffect(() => {
-    // Solo manejar cambios de estado, no el estado inicial
     if (active && !dataFlow && connectionProgress < 100) {
-      // Simular proceso de conexión solo cuando se activa por primera vez
       setIsConnecting(true);
       setConnectionProgress(0);
 
@@ -62,7 +104,6 @@ export function SimulationControl({ active, onToggle }: SimulationControlProps) 
 
       return () => clearInterval(interval);
     } else if (!active) {
-      // Desactivar todo cuando se apaga
       setDataFlow(false);
       setActiveSensors(0);
       setConnectionProgress(0);
@@ -74,13 +115,13 @@ export function SimulationControl({ active, onToggle }: SimulationControlProps) 
     const newState = !active;
 
     if (!newState) {
-      // Confirmar antes de desactivar
       toast('¿Desactivar simulación?', {
         description: 'Se detendrán todos los flujos de datos activos',
         action: {
           label: 'Confirmar',
-          onClick: () => {
+          onClick: async () => {
             onToggle(newState);
+            await sendWebhookToN8n(newState);
             toast.success('Simulación desactivada', {
               description: 'Sensores desconectados y flujos pausados'
             });
@@ -93,6 +134,7 @@ export function SimulationControl({ active, onToggle }: SimulationControlProps) 
       });
     } else {
       onToggle(newState);
+      sendWebhookToN8n(newState);
       toast.success('Iniciando simulación...', {
         description: 'Conectando con los sensores IoT'
       });
@@ -133,10 +175,10 @@ export function SimulationControl({ active, onToggle }: SimulationControlProps) 
             </div>
             <Badge
               className={`rounded-full px-3 py-1 font-semibold ${isConnecting
-                  ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
-                  : active && dataFlow
-                    ? 'bg-green-100 text-green-800 border-green-200'
-                    : 'bg-gray-100 text-gray-800 border-gray-200'
+                ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
+                : active && dataFlow
+                  ? 'bg-green-100 text-green-800 border-green-200'
+                  : 'bg-gray-100 text-gray-800 border-gray-200'
                 }`}
             >
               {getStatusText()}
@@ -170,7 +212,7 @@ export function SimulationControl({ active, onToggle }: SimulationControlProps) 
               className='fleetcare-switch'
               checked={active}
               onCheckedChange={handleToggle}
-              disabled={isConnecting}
+              disabled={isConnecting || isSendingWebhook}
             />
           </div>
 

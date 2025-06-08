@@ -1,19 +1,12 @@
 "use client";
 
-import { Bell, Menu, Settings, User } from 'lucide-react';
+import { Bell, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { ModeToggle } from '@/components/mode-toggle';
+import { ModeToggle } from '@/app/_components/layout/mode-toggle';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
+import { UserButton } from '@clerk/nextjs';
 interface HeaderProps {
   onMenuClick: () => void;
 }
@@ -57,32 +50,9 @@ export function Header({ onMenuClick }: HeaderProps) {
         
         <ModeToggle />
         
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              className="hover:bg-alice-blue transition-colors"
-            >
-              <User className="h-5 w-5 text-ruddy-blue" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent 
-            align="end" 
-            className="w-56 bg-seasalt border-alice-blue shadow-md rounded-2xl"
-          >
-            <DropdownMenuLabel className="text-gray-800">Mi Cuenta</DropdownMenuLabel>
-            <DropdownMenuSeparator className="bg-alice-blue" />
-            <DropdownMenuItem className="hover:bg-alice-blue cursor-pointer">
-              <Settings className="mr-2 h-4 w-4 text-ruddy-blue" />
-              <span className="text-gray-700">Configuración</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-alice-blue" />
-            <DropdownMenuItem className="text-destructive hover:bg-alice-blue cursor-pointer">
-              Cerrar Sesión
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <UserButton />
+        
+
       </div>
     </motion.header>
   );

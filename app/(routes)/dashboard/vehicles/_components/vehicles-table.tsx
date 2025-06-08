@@ -165,7 +165,7 @@ export function VehiclesTable({ searchTerm, statusFilter }: VehiclesTableProps) 
                     className='border-blue-200 rounded-sm hover:bg-gradient-to-br hover:from-blue-50 hover:to-blue-100/50 hover:border-blue-300 transition-all duration-200'
                     variant="outline" 
                     size="sm"
-                    onClick={() => router.push(`/vehicles/${vehicle.id}`)}
+                    onClick={() => router.push(`/dashboard/vehicles/${vehicle.id}`)}
                   >
                     <Eye className="h-4 w-4 mr-2" />
                     Ver Detalles

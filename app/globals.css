@@ -3,7 +3,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  /* Colores base del sistema */
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -24,21 +24,21 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   
-  /* Charts */
+
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
   
-  /* Colores personalizados FleetCare */
+
   --color-seasalt: var(--seasalt);
   --color-alice-blue: var(--alice-blue);
   --color-powder-blue: var(--powder-blue);
   --color-ruddy-blue: var(--ruddy-blue);
   --color-ruddy-blue-2: var(--ruddy-blue-2);
   
-  /* Radius */
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -224,43 +224,43 @@
 
 @layer utilities {
   .bg-seasalt {
-    background-color: oklch(var(--seasalt));
+    background-color: oklch(--seasalt);
   }
 
   .bg-alice-blue {
-    background-color: oklch(var(--alice-blue));
+    background-color: oklch(--alice-blue);
   }
 
   .bg-powder-blue {
-    background-color: oklch(var(--powder-blue));
+    background-color: oklch(--powder-blue);
   }
 
   .bg-ruddy-blue {
-    background-color: oklch(var(--ruddy-blue));
+    background-color: oklch(--ruddy-blue);
   }
 
   .bg-ruddy-blue-2 {
-    background-color: oklch(var(--ruddy-blue-2));
+    background-color: oklch(--ruddy-blue-2);
   }
 
   .text-ruddy-blue {
-    color: oklch(var(--ruddy-blue));
+    color: oklch(--ruddy-blue);
   }
 
   .text-ruddy-blue-2 {
-    color: oklch(var(--ruddy-blue-2));
+    color: oklch(--ruddy-blue-2);
   }
 
   .border-alice-blue {
-    border-color: oklch(var(--alice-blue));
+    border-color: oklch(--alice-blue);
   }
 
   .border-seasalt{
-    border-color: oklch(var(--color-seasalt))
+    border-color: oklch(--color-seasalt)
   }
   
   .border-powder-blue {
-    border-color: oklch(var(--powder-blue));
+    border-color: oklch(--powder-blue);
   }
 
   /* Utilidades adicionales para modo oscuro */

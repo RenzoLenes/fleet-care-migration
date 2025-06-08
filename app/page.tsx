@@ -1,12 +1,14 @@
 "use client";
 
-import { AppLayout } from '@/components/layout/app-layout';
-import { DashboardView } from '@/components/dashboard/dashboard-view';
+
+import Header from './_components/Header';
+import Hero from './_components/Hero';
 
 export default function Home() {
   return (
-    <AppLayout>
-      <DashboardView />
-    </AppLayout>
+    <div>
+      <Header />
+      <Hero />
+    </div>
   );
 }

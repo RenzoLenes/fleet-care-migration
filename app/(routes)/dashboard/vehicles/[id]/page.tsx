@@ -1,5 +1,5 @@
-import { AppLayout } from '@/components/layout/app-layout';
-import { VehicleDetailView } from '@/components/vehicles/vehicle-detail-view';
+import { AppLayout } from '@/app/_components/layout/app-layout';
+import { VehicleDetailView } from '@/app/(routes)/dashboard/vehicles/_components/vehicle-detail-view';
 
 export interface VehicleDetailPageProps {
   params: { id: string };
