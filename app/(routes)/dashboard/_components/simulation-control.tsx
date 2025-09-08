@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Play, Pause, Settings, Wifi, Activity, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -28,7 +28,7 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
   const totalSensors = 127;
 
   // Función para obtener el estado actual desde el backend
-  const fetchCurrentState = async () => {
+  const fetchCurrentState = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await fetch('/api/simulation');
@@ -52,7 +52,7 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [active, onToggle]);
 
   // Función para enviar webhook a través de nuestra API route
   const sendWebhookToN8n = async (status: boolean) => {
@@ -106,7 +106,7 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
   // Fetch current state on component mount
   useEffect(() => {
     fetchCurrentState();
-  }, []);
+  }, [fetchCurrentState]);
 
   useEffect(() => {
     if (!isLoading) {

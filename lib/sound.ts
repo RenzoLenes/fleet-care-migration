@@ -2,6 +2,13 @@
  * Sound utility for playing notification sounds
  */
 
+// Extend Window interface to include webkitAudioContext
+declare global {
+  interface Window {
+    webkitAudioContext?: typeof AudioContext;
+  }
+}
+
 class SoundManager {
   private static instance: SoundManager;
   private audioContext: AudioContext | null = null;
@@ -24,7 +31,7 @@ class SoundManager {
   private initializeOnUserInteraction() {
     const initAudio = () => {
       if (!this.audioContext) {
-        this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
       }
       // Remove listeners after first interaction
       document.removeEventListener('click', initAudio);
@@ -45,7 +52,7 @@ class SoundManager {
 
     try {
       if (!this.audioContext) {
-        this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
       }
 
       if (this.audioContext.state === 'suspended') {

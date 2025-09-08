@@ -13,6 +13,19 @@ import { VehicleHistory } from './vehicle-history';
 import { VehicleDetailSkeleton } from './vehicles-skeleton';
 import VehicleModel from './vehicle-model';
 
+interface VehicleData {
+  id: string;
+  plate: string;
+  model: string;
+  year: number;
+  status: string;
+  driver: string;
+  route: string;
+  lastMaintenance: string;
+  nextMaintenance: string;
+  mileage: string;
+}
+
 interface VehicleDetailViewProps {
   vehicleId: string;
 }
@@ -20,7 +33,7 @@ interface VehicleDetailViewProps {
 export function VehicleDetailView({ vehicleId }: VehicleDetailViewProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [vehicleData, setVehicleData] = useState(null);
+  const [vehicleData, setVehicleData] = useState<VehicleData | null>(null);
 
   useEffect(() => {
     // Simulate loading delay

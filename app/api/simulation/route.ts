@@ -21,7 +21,7 @@ const VALID_USERNAME = process.env.NEXT_PUBLIC_WEBHOOK_USERNAME || '';
 const VALID_PASSWORD = process.env.NEXT_PUBLIC_WEBHOOK_PASSWORD || '';
 
 // In-memory storage for simulation state (in production, this should be in a database)
-let simulationStates: Map<string, {
+const simulationStates: Map<string, {
   active: boolean;
   activeSensors: number;
   totalSensors: number;
@@ -41,7 +41,7 @@ const createBasicAuthHeader = (): string => {
 };
 
 // GET endpoint to retrieve current simulation state
-export async function GET(request: NextRequest) {
+export async function GET() {
     try {
         const { userId } = await auth();
         

@@ -60,8 +60,9 @@ const mockVehicles = [
 // GET /api/vehicles/[id] - Get specific vehicle
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const { id: vehicleId } = await props.params;
   try {
     // Check authentication
     const { userId } = await auth();
@@ -81,7 +82,6 @@ export async function GET(
     }
 
     const tenantId = userTenant[0].tenant_id;
-    const vehicleId = params.id;
 
     // Apply tenant_id to mock data and find vehicle
     const vehiclesWithTenant = mockVehicles.map(vehicle => ({
@@ -117,8 +117,9 @@ export async function GET(
 // PATCH /api/vehicles/[id] - Update specific vehicle
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const { id: vehicleId } = await props.params;
   try {
     // Check authentication
     const { userId } = await auth();
@@ -138,7 +139,6 @@ export async function PATCH(
     }
 
     const tenantId = userTenant[0].tenant_id;
-    const vehicleId = params.id;
 
     // Parse and validate request body
     const body = await request.json();
@@ -194,8 +194,9 @@ export async function PATCH(
 // DELETE /api/vehicles/[id] - Delete specific vehicle
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const { id: vehicleId } = await props.params;
   try {
     // Check authentication
     const { userId } = await auth();
@@ -215,7 +216,6 @@ export async function DELETE(
     }
 
     const tenantId = userTenant[0].tenant_id;
-    const vehicleId = params.id;
 
     // Find existing vehicle
     const vehicleIndex = mockVehicles.findIndex(v => v.vehicle_id === vehicleId);

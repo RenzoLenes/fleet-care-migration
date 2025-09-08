@@ -72,7 +72,7 @@ export function StatsCards() {
               <p className="text-xs text-muted-foreground mb-2">{stat.description}</p>
               {stat.badgeLabel && (
                 <Badge 
-                  variant={stat.variant === 'success' ? 'secondary' : stat.variant === 'warning' ? 'outline' : stat.variant} 
+                  variant={stat.variant === 'warning' ? 'outline' : stat.variant} 
                   className="text-xs font-medium shadow-sm rounded-full px-2 py-1"
                 >
                   {stat.value} {stat.badgeLabel}
