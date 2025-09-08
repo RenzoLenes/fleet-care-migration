@@ -12,7 +12,7 @@ const stats = [
     icon: Truck,
     description: 'Vehículos registrados',
     trend: '+2 este mes',
-    gradient: 'from-blue-500 to-blue-600'
+    variant: 'primary' as const
   },
   {
     title: 'Buses Activos',
@@ -20,7 +20,7 @@ const stats = [
     icon: Activity,
     description: 'En funcionamiento',
     trend: '77% de la flota',
-    gradient: 'from-green-500 to-green-600'
+    variant: 'success' as const
   },
   {
     title: 'Alertas Críticas',
@@ -28,23 +28,23 @@ const stats = [
     icon: AlertCircle,
     description: 'Requieren atención inmediata',
     variant: 'destructive' as const,
-    gradient: 'from-red-500 to-red-600'
+    badgeLabel: 'activas'
   },
   {
     title: 'Alertas Medias',
     value: '8',
     icon: AlertTriangle,
     description: 'Monitoreo requerido',
-    variant: 'default' as const,
-    gradient: 'from-orange-500 to-orange-600'
+    variant: 'warning' as const,
+    badgeLabel: 'pendientes'
   },
   {
     title: 'Alertas Bajas',
     value: '15',
     icon: FileText,
     description: 'Mantenimiento preventivo',
-    variant: 'secondary' as const,
-    gradient: 'from-yellow-500 to-yellow-600'
+    variant: 'warning' as const,
+    badgeLabel: 'programadas'
   }
 ];
 
@@ -58,28 +58,28 @@ export function StatsCards() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: index * 0.1 }}
         >
-          <Card className="metric-card group">
+          <Card className={`metric-card group stats-card-${stat.variant}`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-semibold text-gray-700 group-hover:text-blue-700 transition-colors">
+              <CardTitle className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
                 {stat.title}
               </CardTitle>
-              <div className={`p-2 rounded-xl bg-gradient-to-br ${stat.gradient} shadow-md`}>
-                <stat.icon className="h-4 w-4 text-white" />
+              <div className={`p-2 rounded-xl stats-icon-${stat.variant} bg-background/50 shadow-md`}>
+                <stat.icon className="h-4 w-4" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</div>
-              <p className="text-xs text-gray-600 mb-2">{stat.description}</p>
-              {stat.variant && (
+              <div className="text-3xl font-bold text-foreground mb-1">{stat.value}</div>
+              <p className="text-xs text-muted-foreground mb-2">{stat.description}</p>
+              {stat.badgeLabel && (
                 <Badge 
-                  variant={stat.variant} 
+                  variant={stat.variant === 'warning' ? 'outline' : stat.variant} 
                   className="text-xs font-medium shadow-sm rounded-full px-2 py-1"
                 >
-                  {stat.value} activas
+                  {stat.value} {stat.badgeLabel}
                 </Badge>
               )}
               {stat.trend && (
-                <p className="text-xs text-blue-600 font-medium mt-2">{stat.trend}</p>
+                <p className="text-xs text-primary font-medium mt-2">{stat.trend}</p>
               )}
             </CardContent>
           </Card>

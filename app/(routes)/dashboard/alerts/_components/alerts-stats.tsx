@@ -2,6 +2,7 @@
 
 import { AlertCircle, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertsStatsSkeleton } from './alerts-skeleton';
 
 interface AlertsStatsProps {
   stats: {
@@ -9,36 +10,41 @@ interface AlertsStatsProps {
     medium: number;
     pending: number;
     resolvedToday: number;
-  };
+  } | null;
   loading?: boolean;
 }
 
 export function AlertsStats({ stats, loading }: AlertsStatsProps) {
+  // Show skeleton loading when there are no stats yet
+  if (loading && !stats) {
+    return <AlertsStatsSkeleton />;
+  }
+
   const statsConfig = [
     {
       title: 'Alertas Críticas',
-      value: loading ? '...' : stats.critical.toString(),
+      value: loading ? '...' : stats?.critical?.toString() || '0',
       icon: AlertCircle,
       trend: '+2 desde ayer',
       color: 'text-destructive'
     },
     {
       title: 'Alertas Medias',
-      value: loading ? '...' : stats.medium.toString(),
+      value: loading ? '...' : stats?.medium?.toString() || '0',
       icon: AlertTriangle,
       trend: '+1 desde ayer',
       color: 'text-orange-500'
     },
     {
       title: 'Pendientes',
-      value: loading ? '...' : stats.pending.toString(),
+      value: loading ? '...' : stats?.pending?.toString() || '0',
       icon: Clock,
       trend: 'Requieren atención',
       color: 'text-blue-500'
     },
     {
       title: 'Resueltas Hoy',
-      value: loading ? '...' : stats.resolvedToday.toString(),
+      value: loading ? '...' : stats?.resolvedToday?.toString() || '0',
       icon: CheckCircle,
       trend: '↑ 23% vs ayer',
       color: 'text-green-500'

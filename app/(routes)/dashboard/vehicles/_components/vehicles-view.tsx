@@ -6,16 +6,26 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { VehiclesTable } from './vehicles-table';
+import { AddVehicleModal } from './add-vehicle-modal';
 
 export function VehiclesView() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const handleVehicleAdded = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
 
   return (
     <div className="space-y-6 ">
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold tracking-tight">Gestión de Vehículos</h2>
-        <Button className='bg-blue-500 hover:bg-blue-600'>
+        <Button 
+          className='bg-blue-500 hover:bg-blue-600'
+          onClick={() => setShowAddModal(true)}
+        >
           <Plus className="h-4 w-4 mr-2" />
           Agregar Vehículo
         </Button>
@@ -44,16 +54,16 @@ export function VehiclesView() {
               Todos los estados
             </SelectItem>
             <SelectItem
-              value="ok"
+              value="active"
               className="!hover:bg-blue-50 !hover:text-blue-700 data-[highlighted]:bg-blue-50 data-[highlighted]:text-blue-700 cursor-pointer transition-colors duration-150"
             >
-              OK
+              Activo
             </SelectItem>
             <SelectItem
-              value="warning"
+              value="maintenance"
               className="!hover:bg-blue-50 !hover:text-blue-700 data-[highlighted]:bg-blue-50 data-[highlighted]:text-blue-700 cursor-pointer transition-colors duration-150"
             >
-              Alerta Leve
+              Mantenimiento
             </SelectItem>
             <SelectItem
               value="critical"
@@ -62,10 +72,10 @@ export function VehiclesView() {
               Crítico
             </SelectItem>
             <SelectItem
-              value="offline"
+              value="inactive"
               className="!hover:bg-blue-50 !hover:text-blue-700 data-[highlighted]:bg-blue-50 data-[highlighted]:text-blue-700 cursor-pointer transition-colors duration-150"
             >
-              Fuera de línea
+              Inactivo
             </SelectItem>
           </SelectContent>
         </Select>
@@ -76,7 +86,17 @@ export function VehiclesView() {
         </Button>
       </div>
 
-      <VehiclesTable searchTerm={searchTerm} statusFilter={statusFilter} />
+      <VehiclesTable 
+        searchTerm={searchTerm} 
+        statusFilter={statusFilter} 
+        refreshTrigger={refreshTrigger}
+      />
+
+      <AddVehicleModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onVehicleAdded={handleVehicleAdded}
+      />
     </div>
   );
 }

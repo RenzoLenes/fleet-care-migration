@@ -50,25 +50,25 @@
   --radius: 1rem;
   
   /* Sistema de colores usando OKLCH - Modo Claro */
-  --background: oklch(0.98 0.005 240); /* seasalt en OKLCH */
+  --background: oklch(0.98 0.005 240); /* seasalt */
   --foreground: oklch(0.15 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.15 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.15 0 0);
-  --primary: oklch(62.3% 0.214 259.815); /* ruddy-blue en OKLCH */
+  --primary: oklch(0.62 0.214 260); /* ruddy-blue estandarizado */
   --primary-foreground: oklch(0.98 0 0);
-  --secondary: oklch(0.92 0.02 240); /* alice-blue en OKLCH */
+  --secondary: oklch(0.92 0.02 240); /* alice-blue */
   --secondary-foreground: oklch(0.20 0 0);
-  --muted: oklch(0.92 0.02 240); /* alice-blue en OKLCH */
+  --muted: oklch(0.92 0.02 240); /* alice-blue */
   --muted-foreground: oklch(0.45 0 0);
-  --accent: oklch(0.80 0.08 240); /* powder-blue en OKLCH */
+  --accent: oklch(0.80 0.08 240); /* powder-blue */
   --accent-foreground: oklch(0.20 0 0);
   --destructive: oklch(0.60 0.24 27);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.92 0.02 240); /* alice-blue en OKLCH */
-  --input: oklch(0.92 0.02 240); /* alice-blue en OKLCH */
-  --ring: oklch(0.70 0.12 240); /* ruddy-blue en OKLCH */
+  --border: oklch(0.92 0.02 240); /* alice-blue */
+  --input: oklch(0.92 0.02 240); /* alice-blue */
+  --ring: oklch(0.62 0.214 260); /* primary consistency */
   
   /* Charts con paleta FleetCare */
   --chart-1: oklch(0.70 0.12 240); /* ruddy-blue */
@@ -78,11 +78,11 @@
   --chart-5: oklch(0.70 0.18 30);
   
   /* Colores personalizados FleetCare en OKLCH */
-  --seasalt: oklch(0.98 0.005 240);
-  --alice-blue: oklch(0.92 0.02 240);
-  --powder-blue: oklch(0.80 0.08 240);
-  --ruddy-blue: oklch(0.70 0.12 240);
-  --ruddy-blue-2: oklch(0.66 0.14 240);
+  --seasalt: oklch(0.98 0.005 240); /* Fondo principal claro */
+  --alice-blue: oklch(0.92 0.02 240); /* Superficie secundaria */
+  --powder-blue: oklch(0.80 0.08 240); /* Acento suave */
+  --ruddy-blue: oklch(0.62 0.214 260); /* Primary brand color */
+  --ruddy-blue-2: oklch(0.58 0.24 260); /* Primary variant */
 }
 
 .dark {
@@ -93,7 +93,7 @@
   --card-foreground: oklch(0.98 0.005 240);
   --popover: oklch(0.18 0.003 240);
   --popover-foreground: oklch(0.98 0.005 240);
-  --primary: oklch(0.70 0.12 240); /* Mismo ruddy-blue pero más brillante para contraste */
+  --primary: oklch(0.68 0.20 260); /* ruddy-blue más brillante para contraste */
   --primary-foreground: oklch(0.98 0.005 240);
   --secondary: oklch(0.22 0.01 240); /* Gris oscuro con toque azul */
   --secondary-foreground: oklch(0.90 0.01 240); /* Blanco ligeramente más suave */
@@ -105,7 +105,7 @@
   --destructive-foreground: oklch(0.98 0 0);
   --border: oklch(0.25 0.01 240); /* Borde más claro que el fondo */
   --input: oklch(0.20 0.01 240);
-  --ring: oklch(0.70 0.12 240); /* Igual que primary para consistencia */
+  --ring: oklch(0.68 0.20 260); /* Consistente con primary */
   
   /* Charts para modo oscuro - más brillantes para contraste */
   --chart-1: oklch(0.70 0.12 240); /* ruddy-blue */
@@ -115,11 +115,11 @@
   --chart-5: oklch(0.75 0.20 30); /* Rojo anaranjado */
   
   /* Colores personalizados FleetCare para modo oscuro */
-  --seasalt: oklch(0.20 0.01 240); /* Gris oscuro en lugar de blanco */
-  --alice-blue: oklch(0.25 0.02 240); /* Gris azulado más oscuro */
-  --powder-blue: oklch(0.75 0.10 240); /* Más brillante para contraste */
-  --ruddy-blue: oklch(0.70 0.12 240); /* Igual que primary */
-  --ruddy-blue-2: oklch(0.65 0.14 240); /* Versión más saturada */
+  --seasalt: oklch(0.18 0.003 240); /* Fondo secundario oscuro (como card) */
+  --alice-blue: oklch(0.25 0.02 240); /* Superficie terciaria oscura */
+  --powder-blue: oklch(0.75 0.12 240); /* Acento suave brillante */
+  --ruddy-blue: oklch(0.68 0.20 260); /* Primary brand color consistente */
+  --ruddy-blue-2: oklch(0.72 0.22 260); /* Primary variant más brillante */
 }
 
 @layer base {
@@ -174,8 +174,43 @@
     @apply bg-gradient-to-br from-card to-muted/50 border border-border rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02];
   }
 
+  /* Stats cards con colores semánticos */
+  .stats-card-primary {
+    @apply bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20;
+  }
+
+  .stats-card-success {
+    @apply bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/20;
+  }
+
+  .stats-card-warning {
+    @apply bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border border-yellow-500/20;
+  }
+
+  .stats-card-destructive {
+    @apply bg-gradient-to-br from-destructive/10 to-destructive/5 border border-destructive/20;
+  }
+
+  .stats-icon-primary {
+    @apply text-primary;
+  }
+
+  .stats-icon-success {
+    @apply text-green-600;
+  }
+
+  .stats-icon-warning {
+    @apply text-yellow-600;
+  }
+
+  .stats-icon-destructive {
+    @apply text-destructive;
+  }
+
   .sidebar-item {
     @apply overflow-hidden rounded-xl transition-all duration-200 hover:bg-muted/50;
+    max-width: 100%;
+    white-space: nowrap;
   }
 
   .sidebar-item.active {
@@ -185,6 +220,15 @@
   .sidebar-item.active::before {
     content: "";
     @apply absolute left-0 top-0 w-1 h-full bg-primary-foreground rounded-r-full;
+  }
+
+  /* Prevent sidebar from showing scrollbars */
+  .sidebar-container {
+    overflow: hidden !important;
+  }
+
+  .sidebar-container * {
+    overflow-wrap: break-word;
   }
 
   /* Estilos personalizados para el Switch en modo oscuro */
@@ -220,9 +264,69 @@
   .dark .status-ok {
     @apply bg-gradient-to-r from-emerald-500 to-emerald-600;
   }
+
+  /* Stats cards en modo oscuro */
+  .dark .stats-card-primary {
+    @apply bg-gradient-to-br from-primary/15 to-primary/8 border border-primary/30;
+  }
+
+  .dark .stats-card-success {
+    @apply bg-gradient-to-br from-green-500/15 to-green-500/8 border border-green-500/30;
+  }
+
+  .dark .stats-card-warning {
+    @apply bg-gradient-to-br from-yellow-500/15 to-yellow-500/8 border border-yellow-500/30;
+  }
+
+  .dark .stats-card-destructive {
+    @apply bg-gradient-to-br from-destructive/15 to-destructive/8 border border-destructive/30;
+  }
+
+  .dark .stats-icon-success {
+    @apply text-green-400;
+  }
+
+  .dark .stats-icon-warning {
+    @apply text-yellow-400;
+  }
 }
 
 @layer utilities {
+  /* Scrollbar hiding utilities */
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .sidebar-no-scrollbar {
+    overflow: hidden !important;
+    max-height: 100%;
+    height: 100%;
+  }
+  
+  .sidebar-main-container {
+    overflow: hidden !important;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .sidebar-scroll-area {
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .sidebar-scroll-area::-webkit-scrollbar {
+    display: none;
+  }
+
   .bg-seasalt {
     background-color: oklch(--seasalt);
   }

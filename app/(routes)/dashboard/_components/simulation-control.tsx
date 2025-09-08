@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Play, Pause, Settings, Wifi, Activity, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -23,8 +23,36 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
   const [connectionProgress, setConnectionProgress] = useState(active ? 100 : 0);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSendingWebhook, setIsSendingWebhook] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const totalSensors = 127;
+
+  // Función para obtener el estado actual desde el backend
+  const fetchCurrentState = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/simulation');
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.state) {
+          const state = result.state;
+          setDataFlow(state.dataFlow);
+          setActiveSensors(state.activeSensors);
+          setConnectionProgress(state.connectionProgress);
+          setIsConnecting(state.isConnecting);
+          
+          // Sync the parent component's active state if different
+          if (state.active !== active) {
+            onToggle(state.active);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching simulation state:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [active, onToggle]);
 
   // Función para enviar webhook a través de nuestra API route
   const sendWebhookToN8n = async (status: boolean) => {
@@ -40,6 +68,11 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
           status: status ? 'activado' : 'desactivado',
           sensor_count: status ? activeSensors : 0,
           tenant: tenant,
+          config: {
+            vehicles: ["BUS-001", "BUS-002", "BUS-003", "BUS-004", "BUS-005"],
+            interval: 5,
+            duration: 5
+          }
 
         })
       });
@@ -70,19 +103,26 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
     }
   };
 
+  // Fetch current state on component mount
   useEffect(() => {
-    if (active) {
-      setDataFlow(true);
-      setActiveSensors(98);
-      setConnectionProgress(100);
-      setIsConnecting(false);
-    } else {
-      setDataFlow(false);
-      setActiveSensors(0);
-      setConnectionProgress(0);
-      setIsConnecting(false);
+    fetchCurrentState();
+  }, [fetchCurrentState]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (active) {
+        setDataFlow(true);
+        setActiveSensors(98);
+        setConnectionProgress(100);
+        setIsConnecting(false);
+      } else {
+        setDataFlow(false);
+        setActiveSensors(0);
+        setConnectionProgress(0);
+        setIsConnecting(false);
+      }
     }
-  }, [active]);
+  }, [active, isLoading]);
 
   useEffect(() => {
     if (active && !dataFlow && connectionProgress < 100) {
@@ -122,6 +162,8 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
           onClick: async () => {
             onToggle(newState);
             await sendWebhookToN8n(newState);
+            // Refresh state after successful webhook
+            await fetchCurrentState();
             toast.success('Simulación desactivada', {
               description: 'Sensores desconectados y flujos pausados'
             });
@@ -134,7 +176,10 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
       });
     } else {
       onToggle(newState);
-      sendWebhookToN8n(newState);
+      sendWebhookToN8n(newState).then(() => {
+        // Refresh state after successful webhook
+        fetchCurrentState();
+      });
       toast.success('Iniciando simulación...', {
         description: 'Conectando con los sensores IoT'
       });
@@ -212,7 +257,7 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
               className='fleetcare-switch'
               checked={active}
               onCheckedChange={handleToggle}
-              disabled={isConnecting || isSendingWebhook}
+              disabled={isConnecting || isSendingWebhook || isLoading}
             />
           </div>
 

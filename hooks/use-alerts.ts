@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase, type RealtimeAlert } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { playAlertSound } from '@/lib/sound';
 
 interface AlertsStats {
     critical: number;
@@ -22,6 +23,10 @@ export function useAlerts(severityFilter: string = 'all', statusFilter: string =
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalAlerts, setTotalAlerts] = useState(0);
+    const itemsPerPage = 10;
 
     // Ref para controlar si ya hay una suscripción activa
     const channelRef = useRef<RealtimeChannel | null>(null);
@@ -34,12 +39,16 @@ export function useAlerts(severityFilter: string = 'all', statusFilter: string =
             const params = new URLSearchParams();
             if (severityFilter !== 'all') params.append('severity', severityFilter);
             if (statusFilter !== 'all') params.append('status', statusFilter);
+            params.append('page', currentPage.toString());
+            params.append('limit', itemsPerPage.toString());
 
             const response = await fetch(`/api/alerts?${params.toString()}`);
             if (!response.ok) throw new Error('Error al obtener alertas');
 
             const data = await response.json();
             setAlerts(data.alerts);
+            setTotalPages(data.pagination?.totalPages || 1);
+            setTotalAlerts(data.pagination?.total || 0);
             setError(null);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Error desconocido');
@@ -47,7 +56,7 @@ export function useAlerts(severityFilter: string = 'all', statusFilter: string =
         } finally {
             setLoading(false);
         }
-    }, [severityFilter, statusFilter]);
+    }, [severityFilter, statusFilter, currentPage]);
 
     // Función para obtener estadísticas
     const fetchStats = useCallback(async () => {
@@ -62,13 +71,18 @@ export function useAlerts(severityFilter: string = 'all', statusFilter: string =
         }
     }, []);
 
+    // Reset page when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [severityFilter, statusFilter]);
+
     // Función para resolver una alerta
     const resolveAlert = useCallback(async (alertId: string) => {
         try {
-            const response = await fetch(`/api/alerts/${alertId}`, {
+            const response = await fetch('/api/alerts', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: 'resolved' })
+                body: JSON.stringify({ alertId, status: 'resolved' })
             });
 
             if (!response.ok) throw new Error('Error al resolver alerta');
@@ -85,7 +99,7 @@ export function useAlerts(severityFilter: string = 'all', statusFilter: string =
             );
 
             toast.success('Alerta resuelta', {
-                description: `La alerta ${alertId} ha sido marcada como resuelta.`
+                description: 'La alerta ha sido marcada como resuelta.'
             });
 
             // Actualizar estadísticas
@@ -140,6 +154,13 @@ export function useAlerts(severityFilter: string = 'all', statusFilter: string =
                                         if (exists) return prev;
                                         return [alertData, ...prev];
                                     });
+                                    
+                                    // Play sound based on alert severity
+                                    const soundType = alertData.severity === 'high' ? 'critical' 
+                                                    : alertData.severity === 'medium' ? 'warning' 
+                                                    : 'info';
+                                    playAlertSound(soundType);
+                                    
                                     toast.info('Nueva alerta recibida', {
                                         description: `${alertData.vehicle_id}: ${alertData.description}`
                                     });
@@ -203,6 +224,13 @@ export function useAlerts(severityFilter: string = 'all', statusFilter: string =
         loading,
         error,
         refetch: fetchAlerts,
-        resolveAlert
+        resolveAlert,
+        pagination: {
+            currentPage,
+            totalPages,
+            totalAlerts,
+            itemsPerPage,
+            onPageChange: setCurrentPage
+        }
     };
 }

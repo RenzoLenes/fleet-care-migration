@@ -5,6 +5,7 @@ import { StatsCards } from './stats-cards';
 import { AlertChart } from './alert-chart';
 import { SimulationControl } from './simulation-control';
 import { RecentAlerts } from './recent-alerts';
+import { SimulationModalSkeleton } from './dashboard-skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../../../../components/ui/button';
 import { Settings, X } from 'lucide-react';
@@ -149,14 +150,7 @@ export function DashboardView({ refreshTrigger }: DashboardViewProps) {
                   tenant={tenant}
                 />
               ) : (
-                <div className="fleetcare-card w-96 shadow-xl p-6">
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                    <span className="text-gray-600">
-                      {isLoadingTenant ? 'Cargando configuración...' : 'Error: No se pudo obtener la configuración del tenant'}
-                    </span>
-                  </div>
-                </div>
+                <SimulationModalSkeleton />
               )}
             </motion.div>
           </motion.div>

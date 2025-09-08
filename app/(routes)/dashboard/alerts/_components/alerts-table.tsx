@@ -13,7 +13,17 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import { AlertsTableSkeleton } from './alerts-skeleton';
 import { type RealtimeAlert } from '@/lib/supabase';
+import * as React from 'react';
 
 interface AlertsTableProps {
   alerts: RealtimeAlert[];
@@ -21,6 +31,13 @@ interface AlertsTableProps {
   onResolveAlert: (alertId: string) => void;
   severityFilter: string;
   statusFilter: string;
+  pagination?: {
+    currentPage: number;
+    totalPages: number;
+    totalAlerts: number;
+    itemsPerPage: number;
+    onPageChange: (page: number) => void;
+  };
 }
 
 export function AlertsTable({ 
@@ -28,7 +45,8 @@ export function AlertsTable({
   loading, 
   onResolveAlert, 
   severityFilter, 
-  statusFilter 
+  statusFilter,
+  pagination
 }: AlertsTableProps) {
   const router = useRouter();
 
@@ -89,23 +107,17 @@ export function AlertsTable({
     return matchesSeverity && matchesStatus;
   });
 
-  if (loading) {
-    return (
-      <Card className='fleetcare-table rounded-sm'>
-        <CardContent className="p-8 text-center">
-          <div className="text-muted-foreground">Cargando alertas...</div>
-        </CardContent>
-      </Card>
-    );
+  if (loading && !alerts.length) {
+    return <AlertsTableSkeleton />;
   }
 
   return (
-    <Card className='fleetcare-table rounded-sm'>
-      <CardContent className="p-2">
-        <Table>
+    <div className="space-y-4">
+      <Card className='fleetcare-table rounded-sm'>
+        <CardContent className="p-2">
+          <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
               <TableHead>Vehículo</TableHead>
               <TableHead>Severidad</TableHead>
               <TableHead>Descripción</TableHead>
@@ -126,13 +138,10 @@ export function AlertsTable({
               filteredAlerts.map((alert) => (
                 <TableRow key={alert.id} className="cursor-pointer hover:bg-muted/50">
                   <TableCell>
-                    <div className="font-medium text-sm">{alert.id.slice(0, 8)}...</div>
-                  </TableCell>
-                  <TableCell>
                     <Button 
                       variant="link" 
                       className="p-0 font-medium"
-                      onClick={() => router.push(`/vehicles/${alert.vehicle_id}`)}
+                      onClick={() => router.push(`/dashboard/vehicles/${alert.vehicle_id}`)}
                     >
                       {alert.vehicle_id}
                     </Button>
@@ -184,5 +193,74 @@ export function AlertsTable({
         </Table>
       </CardContent>
     </Card>
+
+    {/* Pagination */}
+    {pagination && pagination.totalPages > 1 && (
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Mostrando {((pagination.currentPage - 1) * pagination.itemsPerPage) + 1} a {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalAlerts)} de {pagination.totalAlerts} alertas
+        </p>
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious 
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (pagination.currentPage > 1) pagination.onPageChange(pagination.currentPage - 1);
+                }}
+                className={pagination.currentPage <= 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+            
+            {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+              .filter(page => {
+                return page === 1 || 
+                       page === pagination.totalPages || 
+                       Math.abs(page - pagination.currentPage) <= 1;
+              })
+              .map((page, index, filteredPages) => {
+                const prevPage = filteredPages[index - 1];
+                const showEllipsisBefore = prevPage && page - prevPage > 1;
+                
+                return (
+                  <React.Fragment key={page}>
+                    {showEllipsisBefore && (
+                      <PaginationItem>
+                        <span className="px-3 py-2 text-sm text-muted-foreground">...</span>
+                      </PaginationItem>
+                    )}
+                    <PaginationItem>
+                      <PaginationLink
+                        href="#"
+                        isActive={pagination.currentPage === page}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          pagination.onPageChange(page);
+                        }}
+                        className="cursor-pointer"
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  </React.Fragment>
+                );
+              })}
+            
+            <PaginationItem>
+              <PaginationNext 
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (pagination.currentPage < pagination.totalPages) pagination.onPageChange(pagination.currentPage + 1);
+                }}
+                className={pagination.currentPage >= pagination.totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
+    )}
+  </div>
   );
 }

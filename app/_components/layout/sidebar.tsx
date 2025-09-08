@@ -54,7 +54,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "bg-seasalt border-r transition-all duration-300 z-40 shadow-md flex flex-col",
+        "bg-seasalt border-r transition-all duration-300 z-40 shadow-md sidebar-main-container",
         // Posicionamiento diferente para móvil vs desktop
         isMobile
           ? "fixed left-0 top-0 h-screen w-64" // ← Quité bg-white
@@ -74,7 +74,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               variant="ghost"
               size="sm"
               onClick={onClose}
-              className="hover:bg-blue-500 hover:text-white"
+              className="hover:bg-primary hover:text-primary-foreground"
             >
               <X className="h-5 w-5" />
             </Button>
@@ -83,33 +83,34 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       )}
 
       {/* Área de navegación - crece para ocupar el espacio disponible */}
-      <div className={cn("p-4 flex-1", isMobile && "pt-2")}>
+      <div className={cn("p-4 flex-1 sidebar-scroll-area min-h-0", isMobile && "pt-2")}>
         <nav className="space-y-2">
           {navigation.map((item) => {
             const isActive = pathname === item.href;
             return (
               <motion.div
                 key={item.name}
-                whileHover={{ scale: 1.02 }}
+                whileHover={{ opacity: 0.9 }}
                 whileTap={{ scale: 0.98 }}
+                className="overflow-hidden"
               >
                 <Button
                   variant="ghost"
                   className={cn(
-                    "w-full justify-start sidebar-item cursor-pointer hover:bg-blue-500 hover:text-white",
+                    "w-full justify-start sidebar-item cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 overflow-hidden",
                     !open && "w-10 justify-center",
-                    isActive && "active bg-blue-500 text-white"
+                    isActive && "active bg-primary text-primary-foreground"
                   )}
                   onClick={() => handleNavigation(item.href)}
                 >
                   <item.icon className={cn(
-                    "h-5 w-5",
-                    isActive ? "text-white" : "text-ruddy-blue hover:text-white"
+                    "h-5 w-5 flex-shrink-0",
+                    isActive ? "text-primary-foreground" : "text-primary hover:text-primary-foreground"
                   )} />
                   {open && (
                     <span className={cn(
-                      "ml-3 font-medium",
-                      isActive ? "text-white" : "hover:text-white"
+                      "ml-3 font-medium truncate",
+                      isActive ? "text-primary-foreground" : "text-foreground hover:text-primary-foreground"
                     )}>
                       {item.name}
                     </span>
@@ -122,13 +123,13 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       </div>
 
       {/* Área de usuario - fija en la parte inferior */}
-      <div className="border-t border-gray-200 bg-white/50 backdrop-blur-sm flex-shrink-0">
+      <div className="border-t bg-seasalt backdrop-blur-sm flex-shrink-0 overflow-hidden">
         <div className={cn(
-          "p-3 transition-all duration-300",
+          "p-3 transition-all duration-300 overflow-hidden",
           !open && "px-2"
         )}>
           {open ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 overflow-hidden">
               <div className="flex-shrink-0">
                 <UserButton
                   appearance={{
@@ -138,7 +139,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                   }}
                 />
               </div>
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 overflow-hidden">
                 <div className="text-sm font-medium text-gray-900 truncate">
                   {user?.firstName || user?.fullName || 'Usuario'}
                 </div>
@@ -148,7 +149,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               </div>
             </div>
           ) : (
-            <div className="flex justify-center bg-seasalt">
+            <div className="flex justify-center bg-seasalt overflow-hidden">
               <UserButton
                 appearance={{
                   elements: {
