@@ -21,7 +21,7 @@ export function VehicleTechData() {
     dtcCodes: ['P0301', 'P0171']
   });
 
-  // Simulate real-time data updates
+  // Simple real-time data simulation (replaced with Supabase realtime in production)
   useEffect(() => {
     const interval = setInterval(() => {
       setData(prev => ({

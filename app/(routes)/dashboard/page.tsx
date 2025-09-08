@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { AppLayout } from '@/app/_components/layout/app-layout';
 import { DashboardView } from '@/app/(routes)/dashboard/_components/dashboard-view';
+import { DashboardPageSkeleton } from '@/app/(routes)/dashboard/_components/dashboard-skeleton';
 import { InitialSetupModal } from '@/app/_components/initial-setup';
 
 export default function Home() {
@@ -66,9 +67,7 @@ export default function Home() {
   if (!isLoaded || isCheckingSetup) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-        </div>
+        <DashboardPageSkeleton />
       </AppLayout>
     );
   }

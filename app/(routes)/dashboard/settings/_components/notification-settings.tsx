@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from 'react';
-import { Bell, Mail, Phone, MessageSquare } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Bell, Mail, Phone, MessageSquare, Volume2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { setSoundEnabled, getSoundEnabled, playAlertSound } from '@/lib/sound';
 
 export function NotificationSettings() {
   const [settings, setSettings] = useState({
@@ -15,14 +16,33 @@ export function NotificationSettings() {
     phoneAlerts: true,
     criticalOnly: false,
     immediateNotification: true,
-    dailyReport: true
+    dailyReport: true,
+    soundNotifications: true
   });
+
+  // Load sound settings on component mount
+  useEffect(() => {
+    const soundEnabled = getSoundEnabled();
+    setSettings(prev => ({ ...prev, soundNotifications: soundEnabled }));
+  }, []);
 
   const handleSettingChange = (key: string, value: boolean) => {
     setSettings(prev => ({ ...prev, [key]: value }));
+    
+    // Handle sound settings immediately
+    if (key === 'soundNotifications') {
+      setSoundEnabled(value);
+      if (value) {
+        // Play a test sound when enabling
+        playAlertSound('info');
+      }
+    }
   };
 
   const handleSave = () => {
+    // Save sound settings to localStorage
+    setSoundEnabled(settings.soundNotifications);
+    
     toast.success('Configuración guardada', {
       description: 'Las preferencias de notificación han sido actualizadas.'
     });
@@ -81,6 +101,56 @@ export function NotificationSettings() {
               onCheckedChange={(value) => handleSettingChange('phoneAlerts', value)}
             />
           </div>
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Volume2 className="h-4 w-4 text-muted-foreground" />
+              <div className="flex flex-col">
+                <Label htmlFor="sound-notifications">Sonidos de Alerta</Label>
+                <span className="text-xs text-muted-foreground">
+                  Reproducir sonido cuando lleguen nuevas alertas
+                </span>
+              </div>
+            </div>
+            <Switch
+              className='fleetcare-switch'
+              id="sound-notifications"
+              checked={settings.soundNotifications}
+              onCheckedChange={(value) => handleSettingChange('soundNotifications', value)}
+            />
+          </div>
+
+          {settings.soundNotifications && (
+            <div className="ml-7 mt-2 space-y-2">
+              <p className="text-xs text-muted-foreground mb-2">Probar sonidos:</p>
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => playAlertSound('info')}
+                  className="text-xs"
+                >
+                  Información
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => playAlertSound('warning')}
+                  className="text-xs"
+                >
+                  Advertencia
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => playAlertSound('critical')}
+                  className="text-xs"
+                >
+                  Crítica
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
         <hr />
