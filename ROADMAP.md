@@ -70,7 +70,7 @@ Integrar un LLM (OpenAI o4-mini) como "mecánico experto" para analizar datos de
   - [x] `llm_cost` (numeric) - tracking de costos
   - [x] `llm_tokens` (integer) - tokens usados
   - [x] `llm_cached` (boolean) - si usó cache
-- [ ] UI para mostrar diagnóstico LLM en tarjeta de alerta
+- [x] UI para mostrar diagnóstico LLM en tarjeta de alerta
 
 #### 1.5 Sistema de Fallback
 - [x] Si LLM falla, usar descripción básica por reglas
