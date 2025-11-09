@@ -17,22 +17,11 @@ interface SimulationRequest {
     config: DataSimulationConfig;
 }
 
-// In-memory storage for simulation state (in production, this should be in a database)
-const simulationStates: Map<string, {
-  active: boolean;
-  activeSensors: number;
-  totalSensors: number;
-  connectionProgress: number;
-  isConnecting: boolean;
-  dataFlow: boolean;
-  lastUpdate: string;
-}> = new Map();
-
 // GET endpoint to retrieve current simulation state
 export async function GET() {
     try {
         const { userId } = await auth();
-        
+
         if (!userId) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
@@ -49,16 +38,20 @@ export async function GET() {
         }
 
         const tenantId = userTenant[0].tenant_id;
-        
-        // Get simulation state for this tenant
-        const state = simulationStates.get(tenantId) || {
-            active: false,
-            activeSensors: 0,
+
+        // Get REAL simulation state from SimulationManager (single source of truth)
+        const isActive = simulationManager.isActive(tenantId);
+        const stats = simulationManager.getStats(tenantId);
+
+        const state = {
+            active: isActive,
+            activeSensors: isActive ? (stats?.vehicleCount || 0) * 20 : 0,  // Aproximación
             totalSensors: 127,
-            connectionProgress: 0,
+            connectionProgress: isActive ? 100 : 0,
             isConnecting: false,
-            dataFlow: false,
-            lastUpdate: new Date().toISOString()
+            dataFlow: isActive,
+            lastUpdate: new Date().toISOString(),
+            stats: stats  // Info adicional
         };
 
         return NextResponse.json({
@@ -109,38 +102,14 @@ export async function POST(request: NextRequest) {
         const isActive = body.status === 'activado';
         const timestamp = new Date().toISOString();
 
-        // Use internal simulation manager instead of n8n
+        // Use internal simulation manager (single source of truth)
         if (isActive) {
             // Start internal simulation
             await simulationManager.startSimulation(tenantId, body.config);
-
-            // Update simulation state
-            simulationStates.set(tenantId, {
-                active: true,
-                activeSensors: body.sensor_count || 98,
-                totalSensors: 127,
-                connectionProgress: 100,
-                isConnecting: false,
-                dataFlow: true,
-                lastUpdate: timestamp
-            });
-
             console.log(`[API] Started internal simulation for tenant ${tenantId} with ${body.config.vehicles.length} vehicles`);
         } else {
             // Stop internal simulation
             await simulationManager.stopSimulation(tenantId);
-
-            // Update simulation state
-            simulationStates.set(tenantId, {
-                active: false,
-                activeSensors: 0,
-                totalSensors: 127,
-                connectionProgress: 0,
-                isConnecting: false,
-                dataFlow: false,
-                lastUpdate: timestamp
-            });
-
             console.log(`[API] Stopped internal simulation for tenant ${tenantId}`);
         }
 
