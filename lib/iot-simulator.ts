@@ -23,13 +23,13 @@ export class IoTDataSimulator {
     'P0101', 'P0134', 'P0174', 'P0401', 'P0442'
   ];
 
-  // Starting locations for different vehicles (Colombian cities)
+  // Starting locations for different vehicles (Peruvian cities / Ciudades peruanas)
   private startingLocations = [
-    { lat: 4.7110, lng: -74.0721, city: 'Bogotá' },      // Bogotá
-    { lat: 6.2476, lng: -75.5658, city: 'Medellín' },    // Medellín
-    { lat: 3.4516, lng: -76.5320, city: 'Cali' },        // Cali
-    { lat: 11.0041, lng: -74.8070, city: 'Barranquilla' }, // Barranquilla
-    { lat: 7.1193, lng: -73.1227, city: 'Bucaramanga' }, // Bucaramanga
+    { lat: -12.0464, lng: -77.0428, city: 'Lima' },      // Lima
+    { lat: -16.4090, lng: -71.5375, city: 'Arequipa' },  // Arequipa
+    { lat: -13.5319, lng: -71.9675, city: 'Cusco' },     // Cusco
+    { lat: -8.1116, lng: -79.0288, city: 'Trujillo' },   // Trujillo
+    { lat: -6.7714, lng: -79.8411, city: 'Chiclayo' },   // Chiclayo
   ];
 
   /**
