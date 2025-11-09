@@ -50,14 +50,19 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
   }, [dataFlow, tenant]);
 
   // Función para obtener el estado actual desde el backend
-  const fetchCurrentState = useCallback(async () => {
+  const fetchCurrentState = useCallback(async (silent = false) => {
     try {
-      setIsLoading(true);
+      if (!silent) {
+        setIsLoading(true);
+      }
+
       const response = await fetch('/api/simulation');
       if (response.ok) {
         const result = await response.json();
         if (result.success && result.state) {
           const state = result.state;
+
+          console.log('[SimulationControl] Syncing with server:', state);
 
           // Actualizar todo el store de una vez
           updateFromServer({
@@ -81,7 +86,9 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
     } catch (error) {
       console.error('Error fetching simulation state:', error);
     } finally {
-      setIsLoading(false);
+      if (!silent) {
+        setIsLoading(false);
+      }
     }
   }, [active, onToggle, updateFromServer, setIsLoading]);
 
@@ -134,11 +141,14 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
     }
   };
 
-  // Sincronizar con servidor al montar (en background)
-  // El estado del store se muestra inmediatamente, así que no hay flash
+  // Sincronizar con servidor al montar (en background silencioso)
+  // El estado de localStorage se muestra inmediatamente, sin flash
   useEffect(() => {
-    fetchCurrentState();
-  }, []);  // Solo al montar, no al actualizar
+    console.log('[SimulationControl] Component mounted, current Zustand state:', { dataFlow, activeSensors });
+
+    // Sync silencioso - no muestra loading, no bloquea UI
+    fetchCurrentState(true);
+  }, [fetchCurrentState]);  // Incluir fetchCurrentState en dependencies
 
   // Connection progress animation (only for visual feedback during activation)
   useEffect(() => {
