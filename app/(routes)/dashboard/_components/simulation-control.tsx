@@ -161,38 +161,41 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
     }
   }, [active, dataFlow, connectionProgress]);
 
-  // Cleanup: detener simulación cuando el componente se desmonta (usuario cierra página)
+  // Cleanup: detener simulación SOLO cuando usuario cierra/refresca página
+  // NO se ejecuta al navegar internamente (ej: ir a /alerts)
   useEffect(() => {
-    return () => {
-      // Usar refs para obtener el valor más reciente de active y tenant
-      // Esto evita que el cleanup se ejecute cuando active cambia
+    const handleBeforeUnload = () => {
+      // Solo ejecutar si la simulación está activa
       if (activeRef.current) {
-        console.log('[SimulationControl] Component unmounting, stopping simulation...');
+        console.log('[SimulationControl] Page unloading, stopping simulation...');
 
         // Detener simulación en el servidor
-        fetch('/api/simulation', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            status: 'desactivado',
-            sensor_count: 0,
-            tenant: tenantRef.current,
-            config: {
-              vehicles: [],
-              interval: 0,
-              duration: 0
-            }
-          }),
-          // Usar keepalive para asegurar que la request se complete aunque la página se cierre
-          keepalive: true
-        }).catch(err => {
-          console.error('[SimulationControl] Error stopping simulation on unmount:', err);
+        // navigator.sendBeacon es más confiable que fetch para beforeunload
+        const payload = JSON.stringify({
+          status: 'desactivado',
+          sensor_count: 0,
+          tenant: tenantRef.current,
+          config: {
+            vehicles: [],
+            interval: 0,
+            duration: 0
+          }
         });
+
+        // sendBeacon asegura que se envíe aunque la página se cierre
+        navigator.sendBeacon(
+          '/api/simulation',
+          new Blob([payload], { type: 'application/json' })
+        );
       }
     };
-    // Array vacío = solo ejecutar cleanup al desmontar, NO cuando active cambia
+
+    // beforeunload se dispara SOLO al cerrar/refrescar, NO al navegar dentro de la app
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
   }, []);
 
   const handleToggle = () => {
