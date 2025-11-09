@@ -140,23 +140,29 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
 
   // Connection progress animation (only for visual feedback during activation)
   useEffect(() => {
-    if (isConnecting && connectionProgress < 100) {
-      const interval = setInterval(() => {
-        setConnectionProgress(prev => {
-          if (prev >= 100) {
-            clearInterval(interval);
-            setIsConnecting(false);
-            setDataFlow(true);
-            setActiveSensors(98);
-            return 100;
-          }
-          return prev + 10;
-        });
-      }, 200);
+    if (!isConnecting) return;
 
-      return () => clearInterval(interval);
-    }
-  }, [isConnecting, connectionProgress, setIsConnecting, setDataFlow, setActiveSensors]);
+    // Iniciar animación de 0 a 100
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 10;
+      setConnectionProgress(progress);
+
+      if (progress >= 100) {
+        clearInterval(interval);
+        // Completar conexión
+        setIsConnecting(false);
+        setDataFlow(true);
+        setActiveSensors(98);
+      }
+    }, 200);
+
+    return () => {
+      clearInterval(interval);
+    };
+    // Solo ejecutar cuando isConnecting cambia a true
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isConnecting]);
 
   // Cleanup: detener simulación SOLO cuando usuario cierra/refresca página
   // NO se ejecuta al navegar internamente (ej: ir a /alerts)
@@ -207,6 +213,8 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
             // Actualizar Zustand store inmediatamente para feedback visual
             setDataFlow(false);
             setActiveSensors(0);
+            setIsConnecting(false);
+            setConnectionProgress(0);
 
             onToggle(newState);
             await sendWebhookToN8n(newState);
