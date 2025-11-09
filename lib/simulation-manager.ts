@@ -297,7 +297,7 @@ export class SimulationManager {
         status: 'pending',
         // LLM fields (Fase 1)
         llm_diagnosis: llmDiagnosis,
-        llm_recommendations: llmRecommendations ? JSON.stringify(llmRecommendations) : null,
+        llm_recommendations: llmRecommendations || null, // Drizzle convierte array a JSONB automáticamente
         llm_severity: llmSeverity,
         llm_cost: llmCost?.toString(),
         llm_tokens: llmTokens,

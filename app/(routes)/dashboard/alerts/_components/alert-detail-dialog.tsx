@@ -47,17 +47,8 @@ export function AlertDetailDialog({ alert, open, onOpenChange }: AlertDetailDial
     });
   };
 
-  // Parse LLM recommendations if available
-  let llmRecommendations: string[] = [];
-  if (alert.llm_recommendations) {
-    try {
-      llmRecommendations = JSON.parse(alert.llm_recommendations);
-    } catch (error) {
-      console.error('Error parsing LLM recommendations:', error);
-      // Fallback: si no se puede parsear, intentar usar el campo recommendation
-      llmRecommendations = [];
-    }
-  }
+  // LLM recommendations ya vienen como array desde JSONB (no necesita JSON.parse)
+  const llmRecommendations: string[] = alert.llm_recommendations || [];
 
   const hasLLMDiagnosis = !!alert.llm_diagnosis;
 

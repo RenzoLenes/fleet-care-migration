@@ -32,7 +32,7 @@ export interface RealtimeAlert {
     updated_at: string;
     // LLM intelligent diagnosis fields (Fase 1)
     llm_diagnosis?: string | null;
-    llm_recommendations?: string | null; // JSON string array
+    llm_recommendations?: string[] | null; // Array deserializado desde JSONB
     llm_severity?: 'low' | 'medium' | 'high' | 'critical' | null;
     llm_cost?: string | null; // numeric as string
     llm_tokens?: number | null;
