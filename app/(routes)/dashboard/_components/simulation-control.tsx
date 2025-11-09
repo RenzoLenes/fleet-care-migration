@@ -97,6 +97,11 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
     setIsSendingWebhook(true);
 
     try {
+      console.log('[SimulationControl] Sending simulation request:', {
+        status: status ? 'activado' : 'desactivado',
+        tenant,
+      });
+
       const response = await fetch('/api/simulation', {
         method: 'POST',
         headers: {
@@ -117,15 +122,19 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
 
       const result = await response.json();
 
+      console.log('[SimulationControl] Server response:', result);
+
       if (!response.ok) {
         throw new Error(result.error || `Error HTTP: ${response.status}`);
       }
 
       if (result.success) {
+        console.log('[SimulationControl] Simulation successfully updated on server');
         toast.success('Simulador actualizado', {
           description: result.message
         });
       } else {
+        console.error('[SimulationControl] Server returned error:', result.error);
         toast.error('Error al actualizar simulador', {
           description: result.error || 'Error desconocido'
         });
