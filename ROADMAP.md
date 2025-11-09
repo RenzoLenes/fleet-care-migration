@@ -31,38 +31,39 @@
 
 ---
 
-## 🎯 Fase 1: Alertas Inteligentes con LLM
+## 🎯 Fase 1: Alertas Inteligentes con LLM ✅ COMPLETADA
 
 ### Objetivo
-Integrar un LLM (OpenAI o4-mini) como "mecánico experto" para analizar datos de vehículos y generar diagnósticos inteligentes con recomendaciones personalizadas.
+Integrar un LLM (OpenAI gpt-4o-mini) como "mecánico experto" para analizar datos de vehículos y generar diagnósticos inteligentes con recomendaciones personalizadas.
 
 ### Tareas Técnicas
 
-#### 1.1 Configuración de OpenAI
+#### 1.1 Configuración de OpenAI ✅
 - [x] Instalar SDK de OpenAI
 - [x] Configurar API keys en `.env` (creado `.env.example`)
 - [x] Crear servicio `lib/openai-service.ts`
 - [x] Implementar rate limiting y manejo de errores
 
-#### 1.2 Sistema de Prompt Engineering
+#### 1.2 Sistema de Prompt Engineering ✅
 - [x] Diseñar prompt base para mecánico experto
 - [x] Template con contexto del vehículo:
   - [x] Datos actuales del sensor
   - [x] Histórico de datos (últimas N lecturas)
-  - [ ] Alertas previas
-  - [ ] Kilometraje/horas de uso
+  - [~] Alertas previas (para futuras mejoras)
+  - [~] Kilometraje/horas de uso (para futuras mejoras)
 - [x] Formato de respuesta estructurada (JSON)
-- [ ] Ejemplos few-shot para mejorar calidad
+- [~] Ejemplos few-shot para mejorar calidad (para futuras mejoras)
 
 #### 1.3 Implementación de Prompt Caching
 - [ ] Cachear contexto estático (perfil del vehículo, reglas generales)
 - [ ] Solo enviar datos nuevos como variable
 - [ ] Medir ahorro de tokens (objetivo: 50-70%)
 - [ ] Implementar estrategia de invalidación de cache
+**Nota:** Diferido para optimización futura
 
-#### 1.4 Integración con Alertas
+#### 1.4 Integración con Alertas ✅
 - [x] Modificar `lib/simulation-manager.ts` para llamar LLM en alertas
-- [ ] Nuevo endpoint `POST /api/alerts/analyze` (opcional - para análisis manual)
+- [~] Nuevo endpoint `POST /api/alerts/analyze` (opcional - para análisis manual)
 - [x] Agregar campos a tabla alerts:
   - [x] `llm_diagnosis` (text)
   - [x] `llm_recommendations` (jsonb)
@@ -71,8 +72,10 @@ Integrar un LLM (OpenAI o4-mini) como "mecánico experto" para analizar datos de
   - [x] `llm_tokens` (integer) - tokens usados
   - [x] `llm_cached` (boolean) - si usó cache
 - [x] UI para mostrar diagnóstico LLM en tarjeta de alerta
+- [x] Usar respuesta LLM en campos principales (description, recommendation, severity)
+- [x] Corregir doble codificación JSON en llm_recommendations
 
-#### 1.5 Sistema de Fallback
+#### 1.5 Sistema de Fallback ✅
 - [x] Si LLM falla, usar descripción básica por reglas
 - [x] Retry logic con exponential backoff
 - [x] Logging de errores y costos
@@ -80,12 +83,12 @@ Integrar un LLM (OpenAI o4-mini) como "mecánico experto" para analizar datos de
 ### Criterios de Éxito
 - ✅ Alertas generadas tienen diagnóstico detallado del LLM
 - ✅ Recomendaciones accionables para el usuario
-- ✅ Costo promedio por alerta < $0.01 USD
+- ✅ Costo promedio por alerta < $0.01 USD (~$0.0002-0.003)
 - ✅ Latencia de generación < 3 segundos
 - ✅ Fallback funciona si LLM no disponible
 
 ### Estimado
-**Tiempo:** 3-5 días
+**Tiempo:** 3-5 días ✅ Completado
 **Complejidad:** Media
 
 ---
