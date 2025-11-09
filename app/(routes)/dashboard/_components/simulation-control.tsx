@@ -84,18 +84,18 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
       }
 
       if (result.success) {
-        toast.success('Estado enviado a n8n', {
+        toast.success('Simulador actualizado', {
           description: result.message
         });
       } else {
-        toast.error('Error al comunicar con n8n', {
+        toast.error('Error al actualizar simulador', {
           description: result.error || 'Error desconocido'
         });
       }
 
     } catch (error) {
-      console.error('Error enviando webhook:', error);
-      toast.error('Error al comunicar con n8n', {
+      console.error('Error actualizando simulador:', error);
+      toast.error('Error al actualizar simulador', {
         description: error instanceof Error ? error.message : 'Error desconocido'
       });
     } finally {
@@ -286,7 +286,7 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
               <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-blue-100">
                 <div className="flex items-center space-x-3">
                   <Wifi className={`h-4 w-4 ${dataFlow ? "text-green-500" : "text-gray-400"}`} />
-                  <span className="font-medium text-gray-700 text-sm">Flujo n8n</span>
+                  <span className="font-medium text-gray-700 text-sm">Simulador IoT</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   {dataFlow ? (
