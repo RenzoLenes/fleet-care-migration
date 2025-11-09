@@ -61,6 +61,11 @@ export class SimulationManager {
 
     const simulator = new IoTDataSimulator();
 
+    // Configure error probability if specified
+    if (config.errorProbability !== undefined) {
+      simulator.setErrorProbability(config.errorProbability);
+    }
+
     // Initialize all vehicles
     config.vehicles.forEach(vehicleId => {
       simulator.initializeVehicle(vehicleId);

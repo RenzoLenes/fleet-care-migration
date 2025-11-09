@@ -18,6 +18,7 @@ interface VehicleState {
 
 export class IoTDataSimulator {
   private vehicleStates: Map<string, VehicleState> = new Map();
+  private errorProbability: number = 0.3; // Default: 30% de probabilidad de errores (0 = sin errores, 1 = máximo errores)
   private dtcCodes = [
     'P0300', 'P0420', 'P0171', 'P0455', 'P0128',
     'P0101', 'P0134', 'P0174', 'P0401', 'P0442'
@@ -33,11 +34,33 @@ export class IoTDataSimulator {
   ];
 
   /**
+   * Set error probability multiplier (0 to 1)
+   * 0 = no errors, 0.5 = medium probability, 1 = maximum errors
+   */
+  setErrorProbability(probability: number): void {
+    this.errorProbability = Math.max(0, Math.min(1, probability)); // Clamp between 0 and 1
+    console.log(`[IoTDataSimulator] Error probability set to ${(this.errorProbability * 100).toFixed(0)}%`);
+  }
+
+  /**
+   * Get current error probability
+   */
+  getErrorProbability(): number {
+    return this.errorProbability;
+  }
+
+  /**
    * Initialize a vehicle with random starting parameters
    */
   initializeVehicle(vehicleId: string): void {
     const location = this.startingLocations[Math.floor(Math.random() * this.startingLocations.length)];
     const patterns: Array<'city' | 'highway' | 'idle' | 'mixed'> = ['city', 'highway', 'idle', 'mixed'];
+
+    // Ajustar valores iniciales basados en errorProbability
+    // errorProbability alto = más probabilidad de empezar con valores problemáticos
+    const batteryBase = 12.6 - (this.errorProbability * 0.4); // Con prob=1: 12.2V (cerca del límite de alerta 12.0V)
+    const fuelBase = 65 - (this.errorProbability * 30); // Con prob=1: 35% (más cerca del límite 15%)
+    const brakeWearMax = 15 + (this.errorProbability * 35); // Con prob=1: hasta 50% de desgaste inicial
 
     this.vehicleStates.set(vehicleId, {
       vehicleId,
@@ -46,9 +69,9 @@ export class IoTDataSimulator {
       currentSpeed: 0,
       currentRpm: 800 + Math.random() * 200, // Idle RPM
       currentEngineTemp: 20 + Math.random() * 10, // Starting cold
-      currentBatteryVoltage: 12.6 + Math.random() * 0.4, // Aumentado de 12.4 a 12.6 (evita alertas de batería baja)
-      currentFuelLevel: 65 + Math.random() * 35, // Aumentado de 40-100% a 65-100% (tarda más en llegar a 15%)
-      brakeWear: Math.random() * 15, // Reducido de 0-30% a 0-15% (empieza con menos desgaste)
+      currentBatteryVoltage: batteryBase + Math.random() * 0.4,
+      currentFuelLevel: fuelBase + Math.random() * 35,
+      brakeWear: Math.random() * brakeWearMax,
       mileage: Math.floor(50000 + Math.random() * 150000),
       lastMaintenanceKm: Math.floor(48000 + Math.random() * 145000),
       pattern: patterns[Math.floor(Math.random() * patterns.length)]
@@ -69,9 +92,11 @@ export class IoTDataSimulator {
     // Update vehicle state based on pattern
     this.updateVehicleState(state);
 
-    // Generate DTC codes (0.5% chance per reading - reducido de 5% para menos alertas)
+    // Generate DTC codes con probabilidad ajustada por errorProbability
+    // Base: 0.5%, con errorProbability=1 puede llegar hasta 5%
     const dtcCodes: string[] = [];
-    if (Math.random() < 0.005) {
+    const dtcProbability = 0.005 + (this.errorProbability * 0.045); // 0.5% a 5%
+    if (Math.random() < dtcProbability) {
       const numCodes = Math.floor(Math.random() * 2) + 1;
       for (let i = 0; i < numCodes; i++) {
         dtcCodes.push(this.dtcCodes[Math.floor(Math.random() * this.dtcCodes.length)]);
@@ -177,8 +202,10 @@ export class IoTDataSimulator {
       state.currentRpm = 1500 + state.currentSpeed * 30 + Math.random() * 500;
     }
 
-    // Engine temp rises slowly in city (reducido de 85-95°C a 80-90°C para evitar alertas >100°C)
-    const targetTemp = 80 + Math.random() * 10;
+    // Engine temp rises slowly in city
+    // Con errorProbability alto, puede alcanzar temperaturas más altas (potencial sobrecalentamiento)
+    const tempBase = 80 + (this.errorProbability * 10); // 80-90°C base según probabilidad
+    const targetTemp = tempBase + Math.random() * (10 + this.errorProbability * 10); // +10 a +20°C aleatorio
     state.currentEngineTemp += (targetTemp - state.currentEngineTemp) * 0.05;
 
     // Battery voltage stable
@@ -196,8 +223,10 @@ export class IoTDataSimulator {
     // RPM higher but steady
     state.currentRpm = 2000 + state.currentSpeed * 20 + Math.random() * 300;
 
-    // Engine temp higher on highway (reducido de 90-98°C a 85-92°C para evitar alertas >100°C)
-    const targetTemp = 85 + Math.random() * 7;
+    // Engine temp higher on highway
+    // Con errorProbability alto, puede alcanzar temperaturas críticas (>100°C)
+    const tempBase = 85 + (this.errorProbability * 12); // 85-97°C base según probabilidad
+    const targetTemp = tempBase + Math.random() * (7 + this.errorProbability * 8); // +7 a +15°C aleatorio
     state.currentEngineTemp += (targetTemp - state.currentEngineTemp) * 0.05;
 
     // Battery charging well
