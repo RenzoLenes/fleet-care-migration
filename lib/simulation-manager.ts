@@ -15,12 +15,27 @@ interface SimulationSession {
   active: boolean;
 }
 
+// Use globalThis to persist sessions across hot reloads
+// This ensures that even if SimulationManager is re-instantiated,
+// the sessions Map persists and we can properly clean up intervals
+declare global {
+  var __simulationSessions: Map<string, SimulationSession> | undefined;
+}
+
 export class SimulationManager {
   private static instance: SimulationManager;
-  private sessions: Map<string, SimulationSession> = new Map();
+  private sessions: Map<string, SimulationSession>;
 
   private constructor() {
-    // Singleton pattern
+    // Use global sessions map if it exists (from previous hot reload)
+    // Otherwise create a new one and store it globally
+    if (!global.__simulationSessions) {
+      console.log('[SimulationManager] Creating new global sessions Map');
+      global.__simulationSessions = new Map();
+    } else {
+      console.log('[SimulationManager] Reusing existing global sessions Map with', global.__simulationSessions.size, 'sessions');
+    }
+    this.sessions = global.__simulationSessions;
   }
 
   static getInstance(): SimulationManager {
