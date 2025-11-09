@@ -254,6 +254,29 @@ export class SimulationManager {
         llmCached = diagnosis.cached;
 
         console.log(`[SimulationManager] LLM diagnosis generated for ${vehicleId} - $${llmCost?.toFixed(4)}`);
+
+        // IMPORTANTE: Usar la evaluación del LLM para mejorar la alerta
+        // Si el LLM determina una severidad diferente, usamos la del LLM
+        if (llmSeverity) {
+          // Map LLM severity to alert severity (LLM puede devolver 'critical')
+          if (llmSeverity === 'critical') {
+            alert.severity = 'high'; // DB solo acepta low, medium, high
+          } else if (['low', 'medium', 'high'].includes(llmSeverity)) {
+            alert.severity = llmSeverity as 'low' | 'medium' | 'high';
+          }
+        }
+
+        // Usar el diagnóstico del LLM como descripción principal (más detallada)
+        if (llmDiagnosis) {
+          alert.description = llmDiagnosis;
+        }
+
+        // Usar las recomendaciones del LLM (más accionables)
+        if (llmRecommendations && llmRecommendations.length > 0) {
+          // Combinar todas las recomendaciones en una sola string
+          alert.recommendation = llmRecommendations.join(' | ');
+        }
+
       } catch (error) {
         // Fallback: if LLM fails, continue with basic alert
         console.warn(`[SimulationManager] LLM diagnosis failed for ${vehicleId}, using fallback:`, error);
