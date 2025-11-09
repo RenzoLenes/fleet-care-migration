@@ -105,18 +105,12 @@ export async function POST(request: NextRequest) {
         // Use internal simulation manager (single source of truth)
         if (isActive) {
             // Start internal simulation
-            console.log(`[API] Request to START simulation for tenant ${tenantId}`);
             await simulationManager.startSimulation(tenantId, body.config);
-            console.log(`[API] ✅ Started internal simulation for tenant ${tenantId} with ${body.config.vehicles.length} vehicles`);
+            console.log(`[API] Started simulation for ${body.config.vehicles.length} vehicles`);
         } else {
             // Stop internal simulation
-            console.log(`[API] Request to STOP simulation for tenant ${tenantId}`);
-            const wasActive = simulationManager.isActive(tenantId);
-            console.log(`[API] Simulation was active before stop: ${wasActive}`);
             await simulationManager.stopSimulation(tenantId);
-            const isStillActive = simulationManager.isActive(tenantId);
-            console.log(`[API] Simulation is active after stop: ${isStillActive}`);
-            console.log(`[API] ✅ Stopped internal simulation for tenant ${tenantId}`);
+            console.log(`[API] Stopped simulation`);
         }
 
         return NextResponse.json({

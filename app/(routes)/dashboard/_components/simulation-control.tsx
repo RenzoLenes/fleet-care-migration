@@ -49,59 +49,11 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
     tenantRef.current = tenant;
   }, [dataFlow, tenant]);
 
-  // Función para obtener el estado actual desde el backend
-  const fetchCurrentState = useCallback(async (silent = false) => {
-    try {
-      if (!silent) {
-        setIsLoading(true);
-      }
-
-      const response = await fetch('/api/simulation');
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && result.state) {
-          const state = result.state;
-
-          console.log('[SimulationControl] Syncing with server:', state);
-
-          // Actualizar todo el store de una vez
-          updateFromServer({
-            active: state.active,
-            dataFlow: state.dataFlow,
-            activeSensors: state.activeSensors,
-            isConnecting: state.isConnecting,
-          });
-
-          // Actualizar connectionProgress localmente si viene del servidor
-          if (state.connectionProgress !== undefined) {
-            setConnectionProgress(state.connectionProgress);
-          }
-
-          // Sync the parent component's active state if different
-          if (state.active !== active) {
-            onToggle(state.active);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching simulation state:', error);
-    } finally {
-      if (!silent) {
-        setIsLoading(false);
-      }
-    }
-  }, [active, onToggle, updateFromServer, setIsLoading]);
-
   // Función para enviar webhook a través de nuestra API route
   const sendWebhookToN8n = async (status: boolean) => {
     setIsSendingWebhook(true);
 
     try {
-      console.log('[SimulationControl] Sending simulation request:', {
-        status: status ? 'activado' : 'desactivado',
-        tenant,
-      });
-
       const response = await fetch('/api/simulation', {
         method: 'POST',
         headers: {
@@ -116,32 +68,28 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
             interval: 5,    // Genera datos cada 5 segundos
             duration: 0     // 0 = ilimitado (hasta que usuario lo detenga)
           }
-
         })
       });
 
       const result = await response.json();
-
-      console.log('[SimulationControl] Server response:', result);
 
       if (!response.ok) {
         throw new Error(result.error || `Error HTTP: ${response.status}`);
       }
 
       if (result.success) {
-        console.log('[SimulationControl] Simulation successfully updated on server');
         toast.success('Simulador actualizado', {
           description: result.message
         });
       } else {
-        console.error('[SimulationControl] Server returned error:', result.error);
+        console.error('[SimulationControl] Server error:', result.error);
         toast.error('Error al actualizar simulador', {
           description: result.error || 'Error desconocido'
         });
       }
 
     } catch (error) {
-      console.error('Error actualizando simulador:', error);
+      console.error('[SimulationControl] Error:', error);
       toast.error('Error al actualizar simulador', {
         description: error instanceof Error ? error.message : 'Error desconocido'
       });
@@ -154,13 +102,9 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
   // IMPORTANTE: NO sobrescribir si el usuario tiene estado guardado en localStorage
   // porque el SimulationManager puede perder su estado en hot reloads de desarrollo
   useEffect(() => {
-    console.log('[SimulationControl] Component mounted, current Zustand state:', { dataFlow, activeSensors });
-
     // Solo sincronizar si el estado local está en "inicial" (nunca activado)
     // Si dataFlow es true (de localStorage), confiar en el estado local
     if (!dataFlow && activeSensors === 0) {
-      console.log('[SimulationControl] Initial state detected, syncing with server');
-
       // Sync silencioso - no muestra loading, no bloquea UI
       const syncWithServer = async () => {
         try {
@@ -169,8 +113,6 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
             const result = await response.json();
             if (result.success && result.state) {
               const state = result.state;
-
-              console.log('[SimulationControl] Server state:', state);
 
               // Actualizar desde servidor solo en carga inicial
               updateFromServer({
@@ -187,14 +129,11 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
             }
           }
         } catch (error) {
-          console.error('[SimulationControl] Error fetching simulation state:', error);
+          console.error('[SimulationControl] Error syncing with server:', error);
         }
       };
 
       syncWithServer();
-    } else {
-      console.log('[SimulationControl] State loaded from localStorage, skipping server sync to preserve user state');
-      console.log('[SimulationControl] To force sync with server, user must manually toggle simulation');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);  // Solo al montar, sin dependencies que causen re-ejecución
@@ -271,8 +210,7 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
 
             onToggle(newState);
             await sendWebhookToN8n(newState);
-            // Refresh state after successful webhook
-            await fetchCurrentState();
+
             toast.success('Simulación desactivada', {
               description: 'Sensores desconectados y flujos pausados'
             });
@@ -289,10 +227,8 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
       setConnectionProgress(0);
 
       onToggle(newState);
-      sendWebhookToN8n(newState).then(() => {
-        // Refresh state after successful webhook
-        fetchCurrentState();
-      });
+      sendWebhookToN8n(newState);
+
       toast.success('Iniciando simulación...', {
         description: 'Conectando con los sensores IoT'
       });

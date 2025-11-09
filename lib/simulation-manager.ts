@@ -105,21 +105,14 @@ export class SimulationManager {
    * Stop simulation for a tenant
    */
   async stopSimulation(tenantId: string): Promise<void> {
-    console.log(`[SimulationManager] stopSimulation called for tenant: ${tenantId}`);
-    console.log(`[SimulationManager] Current sessions in Map:`, Array.from(this.sessions.keys()));
-
     const session = this.sessions.get(tenantId);
 
     if (!session) {
-      console.log(`[SimulationManager] ⚠️ No active simulation found for tenant ${tenantId}`);
-      console.log(`[SimulationManager] This might be due to hot reload creating a new instance`);
+      console.log(`[SimulationManager] ⚠️ No active simulation found (may be due to hot reload)`);
       return;
     }
 
-    console.log(`[SimulationManager] Found active session, stopping...`);
-
     if (session.intervalId) {
-      console.log(`[SimulationManager] Clearing interval ${session.intervalId}`);
       clearInterval(session.intervalId);
       session.intervalId = null;
     }
@@ -127,11 +120,8 @@ export class SimulationManager {
     session.active = false;
     this.sessions.delete(tenantId);
 
-    console.log(`[SimulationManager] ✅ Stopped simulation for tenant ${tenantId}`);
-    console.log(`  - Data points generated: ${session.dataPointsGenerated}`);
-    console.log(`  - Alerts generated: ${session.alertsGenerated}`);
-    console.log(`  - Duration: ${Math.round((Date.now() - session.startedAt.getTime()) / 1000)}s`);
-    console.log(`[SimulationManager] Sessions remaining:`, Array.from(this.sessions.keys()));
+    const duration = Math.round((Date.now() - session.startedAt.getTime()) / 1000);
+    console.log(`[SimulationManager] Stopped simulation - ${session.dataPointsGenerated} data points, ${session.alertsGenerated} alerts (${duration}s)`);
   }
 
   /**
