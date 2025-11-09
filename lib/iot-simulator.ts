@@ -46,9 +46,9 @@ export class IoTDataSimulator {
       currentSpeed: 0,
       currentRpm: 800 + Math.random() * 200, // Idle RPM
       currentEngineTemp: 20 + Math.random() * 10, // Starting cold
-      currentBatteryVoltage: 12.4 + Math.random() * 0.4,
-      currentFuelLevel: 40 + Math.random() * 60,
-      brakeWear: Math.random() * 30, // 0-30% wear
+      currentBatteryVoltage: 12.6 + Math.random() * 0.4, // Aumentado de 12.4 a 12.6 (evita alertas de batería baja)
+      currentFuelLevel: 65 + Math.random() * 35, // Aumentado de 40-100% a 65-100% (tarda más en llegar a 15%)
+      brakeWear: Math.random() * 15, // Reducido de 0-30% a 0-15% (empieza con menos desgaste)
       mileage: Math.floor(50000 + Math.random() * 150000),
       lastMaintenanceKm: Math.floor(48000 + Math.random() * 145000),
       pattern: patterns[Math.floor(Math.random() * patterns.length)]
@@ -69,9 +69,9 @@ export class IoTDataSimulator {
     // Update vehicle state based on pattern
     this.updateVehicleState(state);
 
-    // Generate DTC codes (5% chance per reading)
+    // Generate DTC codes (0.5% chance per reading - reducido de 5% para menos alertas)
     const dtcCodes: string[] = [];
-    if (Math.random() < 0.05) {
+    if (Math.random() < 0.005) {
       const numCodes = Math.floor(Math.random() * 2) + 1;
       for (let i = 0; i < numCodes; i++) {
         dtcCodes.push(this.dtcCodes[Math.floor(Math.random() * this.dtcCodes.length)]);
@@ -150,9 +150,9 @@ export class IoTDataSimulator {
     // Update mileage
     state.mileage += state.currentSpeed / 3600; // speed in km/h to km per reading
 
-    // Gradually increase brake wear
+    // Gradually increase brake wear (reducido de 0.001 a 0.0001 para menos alertas)
     if (state.currentSpeed > 20) {
-      state.brakeWear += 0.001;
+      state.brakeWear += 0.0001;
     }
 
     // Occasionally change pattern (10% chance)
@@ -177,8 +177,8 @@ export class IoTDataSimulator {
       state.currentRpm = 1500 + state.currentSpeed * 30 + Math.random() * 500;
     }
 
-    // Engine temp rises slowly in city
-    const targetTemp = 85 + Math.random() * 10;
+    // Engine temp rises slowly in city (reducido de 85-95°C a 80-90°C para evitar alertas >100°C)
+    const targetTemp = 80 + Math.random() * 10;
     state.currentEngineTemp += (targetTemp - state.currentEngineTemp) * 0.05;
 
     // Battery voltage stable
@@ -196,8 +196,8 @@ export class IoTDataSimulator {
     // RPM higher but steady
     state.currentRpm = 2000 + state.currentSpeed * 20 + Math.random() * 300;
 
-    // Engine temp higher on highway
-    const targetTemp = 90 + Math.random() * 8;
+    // Engine temp higher on highway (reducido de 90-98°C a 85-92°C para evitar alertas >100°C)
+    const targetTemp = 85 + Math.random() * 7;
     state.currentEngineTemp += (targetTemp - state.currentEngineTemp) * 0.05;
 
     // Battery charging well
