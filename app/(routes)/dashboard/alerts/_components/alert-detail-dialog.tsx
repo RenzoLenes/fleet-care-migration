@@ -54,10 +54,17 @@ export function AlertDetailDialog({ alert, open, onOpenChange }: AlertDetailDial
       llmRecommendations = JSON.parse(alert.llm_recommendations);
     } catch (error) {
       console.error('Error parsing LLM recommendations:', error);
+      // Fallback: si no se puede parsear, intentar usar el campo recommendation
+      llmRecommendations = [];
     }
   }
 
   const hasLLMDiagnosis = !!alert.llm_diagnosis;
+
+  // Dividir recomendaciones básicas si existen (formato: "rec1 | rec2 | rec3")
+  const basicRecommendations = alert.recommendation
+    ? alert.recommendation.split(' | ').filter(r => r.trim())
+    : [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -84,18 +91,37 @@ export function AlertDetailDialog({ alert, open, onOpenChange }: AlertDetailDial
                 <Badge variant="outline">{alert.alert_type}</Badge>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Severidad Original:</span>
+                <span className="text-sm text-muted-foreground">Severidad:</span>
                 {getSeverityBadge(alert.severity)}
               </div>
-              <Separator />
-              <div>
-                <p className="text-sm font-medium mb-1">Descripción:</p>
-                <p className="text-sm text-muted-foreground">{alert.description}</p>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Estado:</span>
+                <Badge variant="outline" className="capitalize">{alert.status}</Badge>
               </div>
-              <div>
-                <p className="text-sm font-medium mb-1">Recomendación:</p>
-                <p className="text-sm text-muted-foreground">{alert.recommendation}</p>
-              </div>
+
+              {/* Solo mostrar descripción/recomendación básica si NO hay diagnóstico LLM */}
+              {!hasLLMDiagnosis && (
+                <>
+                  <Separator />
+                  <div>
+                    <p className="text-sm font-medium mb-1">Descripción:</p>
+                    <p className="text-sm text-muted-foreground">{alert.description}</p>
+                  </div>
+                  {basicRecommendations.length > 0 && (
+                    <div>
+                      <p className="text-sm font-medium mb-1">Recomendaciones:</p>
+                      <ul className="space-y-1">
+                        {basicRecommendations.map((rec, index) => (
+                          <li key={index} className="text-sm flex gap-2 items-start text-muted-foreground">
+                            <span className="font-bold">•</span>
+                            <span className="flex-1">{rec}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -109,14 +135,6 @@ export function AlertDetailDialog({ alert, open, onOpenChange }: AlertDetailDial
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* LLM Severity */}
-                {alert.llm_severity && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Severidad Evaluada por IA:</span>
-                    {getSeverityBadge(alert.llm_severity)}
-                  </div>
-                )}
-
                 {/* LLM Diagnosis */}
                 <div>
                   <p className="text-sm font-medium mb-2 flex items-center gap-2">
@@ -128,15 +146,15 @@ export function AlertDetailDialog({ alert, open, onOpenChange }: AlertDetailDial
                   </p>
                 </div>
 
-                {/* LLM Recommendations */}
-                {llmRecommendations.length > 0 && (
+                {/* LLM Recommendations - Mostrar de llmRecommendations o basicRecommendations */}
+                {(llmRecommendations.length > 0 || basicRecommendations.length > 0) && (
                   <div>
                     <p className="text-sm font-medium mb-2 flex items-center gap-2">
                       <TrendingUp className="h-4 w-4 text-purple-500" />
                       Recomendaciones Accionables:
                     </p>
-                    <ul className="space-y-2">
-                      {llmRecommendations.map((rec, index) => (
+                    <ul className="space-y-2 bg-white dark:bg-gray-950 p-3 rounded-md border">
+                      {(llmRecommendations.length > 0 ? llmRecommendations : basicRecommendations).map((rec, index) => (
                         <li key={index} className="text-sm flex gap-2 items-start">
                           <span className="text-purple-500 font-bold">•</span>
                           <span className="flex-1">{rec}</span>

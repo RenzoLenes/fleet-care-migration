@@ -160,6 +160,22 @@ async function makeOpenAIRequest(
   // Parse JSON response
   const parsed = JSON.parse(result);
 
+  // Validar y normalizar recommendations (asegurar que sea un array)
+  let recommendations: string[] = [];
+  if (parsed.recommendations) {
+    if (Array.isArray(parsed.recommendations)) {
+      recommendations = parsed.recommendations;
+    } else if (typeof parsed.recommendations === 'string') {
+      // Si el LLM devolvió una string en lugar de array, convertirla a array
+      recommendations = [parsed.recommendations];
+    }
+  }
+
+  // Validar diagnosis
+  if (!parsed.diagnosis || typeof parsed.diagnosis !== 'string') {
+    throw new Error('Invalid LLM response: missing or invalid diagnosis field');
+  }
+
   // Calcular costo estimado (precios aproximados para gpt-4o-mini)
   const inputTokens = response.usage?.prompt_tokens || 0;
   const outputTokens = response.usage?.completion_tokens || 0;
@@ -170,7 +186,7 @@ async function makeOpenAIRequest(
 
   return {
     diagnosis: parsed.diagnosis,
-    recommendations: parsed.recommendations || [],
+    recommendations: recommendations,
     severity: parsed.severity || 'medium',
     estimatedCost,
     tokensUsed: totalTokens,
