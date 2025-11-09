@@ -61,8 +61,8 @@ Integrar un LLM (OpenAI o4-mini) como "mecánico experto" para analizar datos de
 - [ ] Implementar estrategia de invalidación de cache
 
 #### 1.4 Integración con Alertas
-- [ ] Modificar `lib/iot-simulator.ts` para llamar LLM en alertas
-- [ ] Nuevo endpoint `POST /api/alerts/analyze`
+- [x] Modificar `lib/simulation-manager.ts` para llamar LLM en alertas
+- [ ] Nuevo endpoint `POST /api/alerts/analyze` (opcional - para análisis manual)
 - [x] Agregar campos a tabla alerts:
   - [x] `llm_diagnosis` (text)
   - [x] `llm_recommendations` (jsonb)
@@ -73,7 +73,7 @@ Integrar un LLM (OpenAI o4-mini) como "mecánico experto" para analizar datos de
 - [ ] UI para mostrar diagnóstico LLM en tarjeta de alerta
 
 #### 1.5 Sistema de Fallback
-- [ ] Si LLM falla, usar descripción básica por reglas
+- [x] Si LLM falla, usar descripción básica por reglas
 - [x] Retry logic con exponential backoff
 - [x] Logging de errores y costos
 
