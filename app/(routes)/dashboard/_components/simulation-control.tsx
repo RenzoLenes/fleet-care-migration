@@ -141,14 +141,50 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
     }
   };
 
-  // Sincronizar con servidor al montar (en background silencioso)
+  // Sincronizar con servidor al montar (solo UNA vez)
   // El estado de localStorage se muestra inmediatamente, sin flash
   useEffect(() => {
     console.log('[SimulationControl] Component mounted, current Zustand state:', { dataFlow, activeSensors });
 
     // Sync silencioso - no muestra loading, no bloquea UI
-    fetchCurrentState(true);
-  }, [fetchCurrentState]);  // Incluir fetchCurrentState en dependencies
+    const syncWithServer = async () => {
+      try {
+        const response = await fetch('/api/simulation');
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.state) {
+            const state = result.state;
+
+            console.log('[SimulationControl] Server state:', state);
+            console.log('[SimulationControl] Current Zustand state before sync:', { dataFlow, activeSensors });
+
+            // Solo actualizar si el servidor tiene un estado diferente
+            if (state.dataFlow !== dataFlow || state.activeSensors !== activeSensors) {
+              console.log('[SimulationControl] State mismatch detected, updating from server');
+              updateFromServer({
+                active: state.active,
+                dataFlow: state.dataFlow,
+                activeSensors: state.activeSensors,
+                isConnecting: state.isConnecting,
+              });
+
+              // Sync the parent component's active state if different
+              if (state.active !== active) {
+                onToggle(state.active);
+              }
+            } else {
+              console.log('[SimulationControl] State matches server, no update needed');
+            }
+          }
+        }
+      } catch (error) {
+        console.error('[SimulationControl] Error fetching simulation state:', error);
+      }
+    };
+
+    syncWithServer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);  // Solo al montar, sin dependencies que causen re-ejecución
 
   // Connection progress animation (only for visual feedback during activation)
   useEffect(() => {
