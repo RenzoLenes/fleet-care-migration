@@ -33,6 +33,12 @@ interface Alert {
   timestamp: string;
 }
 
+// Lista de todos los vehículos registrados en el sistema
+const REGISTERED_VEHICLES = ["BUS-001", "BUS-002", "BUS-003", "BUS-004", "BUS-005"];
+
+// Posición por defecto para vehículos sin datos (Lima, Perú)
+const DEFAULT_POSITION = { lat: -12.0464, lng: -77.0428 };
+
 export default function MapPage() {
   const router = useRouter();
   const { user } = useUser();
@@ -123,7 +129,7 @@ export default function MapPage() {
         console.error('[MapPage] Error fetching alerts:', alertsError);
       }
 
-      // Agrupar por vehículo y obtener la posición más reciente
+      // Agrupar por vehículo y obtener la posición más reciente de los que tienen datos
       const latestPositions = new Map<string, VehicleStats>();
       (stats as VehicleStats[]).forEach((stat) => {
         if (!latestPositions.has(stat.vehicle_id)) {
@@ -131,26 +137,39 @@ export default function MapPage() {
         }
       });
 
-      // Convertir a formato de VehiclePosition
-      const vehiclePositions: VehiclePosition[] = Array.from(latestPositions.values())
-        .filter((stat) => stat.gps_lat !== null && stat.gps_lng !== null)
-        .map((stat) => {
-          const lastUpdate = new Date(stat.timestamp);
-          const status = getVehicleStatus(
-            stat.vehicle_id,
-            (alerts as Alert[]) || [],
-            lastUpdate
-          );
+      // Crear array con TODOS los vehículos registrados
+      const vehiclePositions: VehiclePosition[] = REGISTERED_VEHICLES.map((vehicleId) => {
+        const stat = latestPositions.get(vehicleId);
 
+        // Si el vehículo NO tiene datos, mostrarlo como offline en posición por defecto
+        if (!stat || stat.gps_lat === null || stat.gps_lng === null) {
           return {
-            vehicleId: stat.vehicle_id,
-            lat: parseFloat(stat.gps_lat as any), // Convertir string a número
-            lng: parseFloat(stat.gps_lng as any), // Convertir string a número
-            speed: stat.speed || undefined,
-            status,
-            lastUpdate,
+            vehicleId,
+            lat: DEFAULT_POSITION.lat,
+            lng: DEFAULT_POSITION.lng,
+            speed: undefined,
+            status: 'offline' as const,
+            lastUpdate: new Date(0), // Fecha muy antigua
           };
-        });
+        }
+
+        // Si tiene datos, verificar su estado
+        const lastUpdate = new Date(stat.timestamp);
+        const status = getVehicleStatus(
+          stat.vehicle_id,
+          (alerts as Alert[]) || [],
+          lastUpdate
+        );
+
+        return {
+          vehicleId: stat.vehicle_id,
+          lat: parseFloat(stat.gps_lat as any), // Convertir string a número
+          lng: parseFloat(stat.gps_lng as any), // Convertir string a número
+          speed: stat.speed || undefined,
+          status,
+          lastUpdate,
+        };
+      });
 
       setVehicles(vehiclePositions);
 
@@ -165,11 +184,16 @@ export default function MapPage() {
       // Debug: Mostrar vehículos offline con detalles
       const offlineVehicles = vehiclePositions.filter(v => v.status === 'offline');
       if (offlineVehicles.length > 0) {
-        console.log('[MapPage] Offline vehicles:', offlineVehicles.map(v => ({
-          id: v.vehicleId,
-          lastUpdate: v.lastUpdate.toISOString(),
-          minutesSinceUpdate: Math.round((Date.now() - v.lastUpdate.getTime()) / 60000)
-        })));
+        console.log('[MapPage] Offline vehicles:', offlineVehicles.map(v => {
+          const minutesSinceUpdate = Math.round((Date.now() - v.lastUpdate.getTime()) / 60000);
+          const neverSentData = v.lastUpdate.getTime() === 0;
+          return {
+            id: v.vehicleId,
+            reason: neverSentData ? 'Never sent data' : 'Data too old',
+            lastUpdate: neverSentData ? 'N/A' : v.lastUpdate.toISOString(),
+            minutesSinceUpdate: neverSentData ? 'N/A' : minutesSinceUpdate
+          };
+        }));
       }
     } catch (error) {
       console.error('[MapPage] Error in fetchVehiclePositions:', error);

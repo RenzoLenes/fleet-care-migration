@@ -209,8 +209,12 @@ export function FleetMap({
               >
                 <Popup className="custom-popup" maxWidth={280}>
                   <div className="p-1">
-                    {/* Header */}
-                    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-3 rounded-t-lg -mx-1 -mt-1 mb-3">
+                    {/* Header - cambia color según estado */}
+                    <div className={`${
+                      vehicle.status === 'offline'
+                        ? 'bg-gradient-to-r from-gray-500 to-gray-600'
+                        : 'bg-gradient-to-r from-blue-600 to-indigo-600'
+                    } text-white px-4 py-3 rounded-t-lg -mx-1 -mt-1 mb-3`}>
                       <div className="flex items-center justify-between">
                         <h3 className="font-bold text-lg flex items-center gap-2">
                           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -221,11 +225,16 @@ export function FleetMap({
                         </h3>
                       </div>
                       <p className="text-xs text-blue-100 mt-1">
-                        {new Date(vehicle.lastUpdate).toLocaleString('es-PE', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          second: '2-digit'
-                        })}
+                        {vehicle.lastUpdate.getTime() === 0
+                          ? 'Sin datos - Nunca conectado'
+                          : new Date(vehicle.lastUpdate).toLocaleString('es-PE', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              second: '2-digit',
+                              day: '2-digit',
+                              month: '2-digit'
+                            })
+                        }
                       </p>
                     </div>
 
@@ -237,8 +246,20 @@ export function FleetMap({
                         {getStatusBadge(vehicle.status)}
                       </div>
 
+                      {/* Mensaje de offline */}
+                      {vehicle.status === 'offline' && (
+                        <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg border-l-4 border-gray-500">
+                          <p className="text-xs text-gray-700 dark:text-gray-300 font-medium">
+                            {vehicle.lastUpdate.getTime() === 0
+                              ? '⚠️ Este vehículo no ha enviado datos aún. Inicia la simulación para ver su ubicación en tiempo real.'
+                              : '⚠️ Sin datos recientes. Última transmisión hace más de 2 minutos.'
+                            }
+                          </p>
+                        </div>
+                      )}
+
                       {/* Velocidad */}
-                      {vehicle.speed !== undefined && (
+                      {vehicle.speed !== undefined && vehicle.status !== 'offline' && (
                         <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
                           <div className="flex items-center gap-2">
                             <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -253,11 +274,13 @@ export function FleetMap({
                       {/* Coordenadas */}
                       <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
                         <div className="flex items-center gap-2 mb-1">
-                          <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className={`w-4 h-4 ${vehicle.status === 'offline' ? 'text-gray-500' : 'text-green-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                           </svg>
-                          <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Ubicación</span>
+                          <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
+                            {vehicle.lastUpdate.getTime() === 0 ? 'Ubicación predeterminada' : 'Última ubicación'}
+                          </span>
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">
                           {vehicle.lat.toFixed(6)}, {vehicle.lng.toFixed(6)}
