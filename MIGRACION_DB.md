@@ -39,10 +39,32 @@ Archivo de migración listo para aplicar.
 
 1. Ve a tu proyecto en [Supabase Dashboard](https://app.supabase.com)
 2. Click en **SQL Editor**
-3. Copia y pega el contenido de:
-   ```
-   supabase/migrations/0001_add_gps_fuel_to_vehicle_stats.sql
-   ```
+3. Copia y pega el siguiente SQL:
+
+```sql
+-- Add GPS and fuel_level columns to vehicle_stats table
+ALTER TABLE "vehicle_stats" ADD COLUMN "fuel_level" integer;
+--> statement-breakpoint
+ALTER TABLE "vehicle_stats" ADD COLUMN "gps_lat" numeric(10, 7);
+--> statement-breakpoint
+ALTER TABLE "vehicle_stats" ADD COLUMN "gps_lng" numeric(10, 7);
+--> statement-breakpoint
+ALTER TABLE "vehicle_stats" ADD COLUMN "gps_accuracy" numeric(6, 2);
+--> statement-breakpoint
+
+-- Add missing columns to alerts table
+ALTER TABLE "alerts" ADD COLUMN IF NOT EXISTS "alert_type" text NOT NULL DEFAULT 'unknown';
+--> statement-breakpoint
+ALTER TABLE "alerts" ADD COLUMN IF NOT EXISTS "recomendation" text NOT NULL DEFAULT '';
+--> statement-breakpoint
+
+-- Add comment for documentation
+COMMENT ON COLUMN "vehicle_stats"."fuel_level" IS 'Fuel level percentage (0-100)';
+COMMENT ON COLUMN "vehicle_stats"."gps_lat" IS 'GPS Latitude';
+COMMENT ON COLUMN "vehicle_stats"."gps_lng" IS 'GPS Longitude';
+COMMENT ON COLUMN "vehicle_stats"."gps_accuracy" IS 'GPS accuracy in meters';
+```
+
 4. Click en **Run**
 
 ### Opción 2: Usando CLI de Supabase
