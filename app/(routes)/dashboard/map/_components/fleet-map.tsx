@@ -155,9 +155,6 @@ export function FleetMap({
                 key={vehicle.vehicleId}
                 position={[vehicle.lat, vehicle.lng]}
                 icon={getVehicleIcon(vehicle.status)}
-                eventHandlers={{
-                  click: () => onVehicleClick?.(vehicle.vehicleId),
-                }}
               >
                 <Popup>
                   <div className="p-2 min-w-[200px]">

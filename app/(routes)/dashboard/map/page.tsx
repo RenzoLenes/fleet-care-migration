@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AppLayout } from '@/app/_components/layout/app-layout';
 import { FleetMap } from './_components/fleet-map';
 import { supabase } from '@/lib/supabase';
 import { useUser } from '@clerk/nextjs';
@@ -181,25 +182,29 @@ export default function MapPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[600px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
+      <AppLayout>
+        <div className="flex items-center justify-center h-[600px]">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </AppLayout>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Mapa de Flota</h1>
-        <p className="text-muted-foreground">
-          Visualiza la ubicación y estado de todos tus vehículos en tiempo real
-        </p>
-      </div>
+    <AppLayout>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Mapa de Flota</h1>
+          <p className="text-muted-foreground">
+            Visualiza la ubicación y estado de todos tus vehículos en tiempo real
+          </p>
+        </div>
 
-      <FleetMap
-        vehicles={vehicles}
-        onVehicleClick={handleVehicleClick}
-      />
-    </div>
+        <FleetMap
+          vehicles={vehicles}
+          onVehicleClick={handleVehicleClick}
+        />
+      </div>
+    </AppLayout>
   );
 }
