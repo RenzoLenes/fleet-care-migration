@@ -151,6 +151,38 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
     }
   }, [active, dataFlow, connectionProgress]);
 
+  // Cleanup: detener simulación cuando el componente se desmonta (usuario cierra página)
+  useEffect(() => {
+    return () => {
+      // Si la simulación está activa cuando se desmonta el componente
+      if (active) {
+        console.log('[SimulationControl] Component unmounting, stopping simulation...');
+
+        // Detener simulación en el servidor
+        fetch('/api/simulation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: 'desactivado',
+            sensor_count: 0,
+            tenant: tenant,
+            config: {
+              vehicles: [],
+              interval: 0,
+              duration: 0
+            }
+          }),
+          // Usar keepalive para asegurar que la request se complete aunque la página se cierre
+          keepalive: true
+        }).catch(err => {
+          console.error('[SimulationControl] Error stopping simulation on unmount:', err);
+        });
+      }
+    };
+  }, [active, tenant]);
+
   const handleToggle = () => {
     const newState = !active;
 
