@@ -3,6 +3,7 @@ import { IoTDataSimulator } from './iot-simulator';
 import { DataSimulationConfig, VehicleIoTData } from './types';
 import { db } from '@/db';
 import { vehicleStats, alerts } from '@/db/schema';
+import { generateDiagnosis, type VehicleAlertContext } from './openai-service';
 
 interface SimulationSession {
   tenantId: string;
@@ -165,8 +166,8 @@ export class SimulationManager {
               ...alert
             });
           } else {
-            // Save alert directly to database
-            await this.saveAlert(tenantId, vehicleId, alert);
+            // Save alert directly to database with LLM diagnosis
+            await this.saveAlert(tenantId, vehicleId, alert, iotData);
           }
         }
       } catch (error) {
@@ -204,7 +205,7 @@ export class SimulationManager {
   }
 
   /**
-   * Save alert directly to database
+   * Save alert directly to database with LLM diagnosis
    */
   private async saveAlert(
     tenantId: string,
@@ -214,9 +215,54 @@ export class SimulationManager {
       alert_type: string;
       description: string;
       recommendation: string;
-    }
+    },
+    vehicleData: VehicleIoTData
   ): Promise<void> {
     try {
+      // Prepare LLM context
+      const llmContext: VehicleAlertContext = {
+        vehicleId,
+        timestamp: new Date(),
+        alertType: alert.alert_type,
+        currentData: {
+          rpm: vehicleData.rpm,
+          speed: vehicleData.speed,
+          engineTemp: vehicleData.engine_temp,
+          batteryVoltage: vehicleData.battery_voltage,
+          fuelLevel: vehicleData.fuel_level,
+          brakeStatus: vehicleData.brake_status,
+          dtcCodes: vehicleData.dtc_codes,
+        },
+        // TODO: Agregar datos históricos para mejor contexto
+      };
+
+      // Try to get LLM diagnosis
+      let llmDiagnosis: string | null = null;
+      let llmRecommendations: string[] | null = null;
+      let llmSeverity: string | null = null;
+      let llmCost: number | null = null;
+      let llmTokens: number | null = null;
+      let llmCached: boolean = false;
+
+      try {
+        const diagnosis = await generateDiagnosis(llmContext);
+        llmDiagnosis = diagnosis.diagnosis;
+        llmRecommendations = diagnosis.recommendations;
+        llmSeverity = diagnosis.severity;
+        llmCost = diagnosis.estimatedCost;
+        llmTokens = diagnosis.tokensUsed;
+        llmCached = diagnosis.cached;
+
+        console.log(`[SimulationManager] LLM diagnosis generated for ${vehicleId} - $${llmCost?.toFixed(4)}`);
+      } catch (error) {
+        // Fallback: if LLM fails, continue with basic alert
+        console.warn(`[SimulationManager] LLM diagnosis failed for ${vehicleId}, using fallback:`, error);
+        // Use basic description and recommendation as fallback
+        llmDiagnosis = null;
+        llmRecommendations = null;
+      }
+
+      // Save alert to database
       await db.insert(alerts).values({
         tenant_id: tenantId,
         vehicle_id: vehicleId,
@@ -226,9 +272,16 @@ export class SimulationManager {
         description: alert.description,
         recomendation: alert.recommendation,
         status: 'pending',
+        // LLM fields (Fase 1)
+        llm_diagnosis: llmDiagnosis,
+        llm_recommendations: llmRecommendations ? JSON.stringify(llmRecommendations) : null,
+        llm_severity: llmSeverity,
+        llm_cost: llmCost?.toString(),
+        llm_tokens: llmTokens,
+        llm_cached: llmCached,
       });
 
-      console.log(`[SimulationManager] Alert created: ${alert.alert_type} for ${vehicleId}`);
+      console.log(`[SimulationManager] Alert created: ${alert.alert_type} for ${vehicleId}${llmDiagnosis ? ' (with LLM diagnosis)' : ''}`);
     } catch (error) {
       console.error(`[SimulationManager] Error saving alert for ${vehicleId}:`, error);
       throw error;
