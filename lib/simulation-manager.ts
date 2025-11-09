@@ -1,6 +1,8 @@
 // Simulation Manager - Manages lifecycle of IoT data simulation
 import { IoTDataSimulator } from './iot-simulator';
-import { DataSimulationConfig } from './types';
+import { DataSimulationConfig, VehicleIoTData } from './types';
+import { db } from '@/db';
+import { vehicleStats, alerts } from '@/db/schema';
 
 interface SimulationSession {
   tenantId: string;
@@ -123,18 +125,15 @@ export class SimulationManager {
         const iotData = simulator.generateData(vehicleId, tenantId);
         session.dataPointsGenerated++;
 
-        // Send to ingestion endpoint
+        // Save vehicle data directly to database
         if (onDataGenerated) {
           await onDataGenerated({
             type: 'vehicle_data',
             ...iotData
           });
         } else {
-          // Default: send to internal API
-          await this.sendToIngestionAPI({
-            type: 'vehicle_data',
-            ...iotData
-          });
+          // Default: save directly to database
+          await this.saveVehicleData(iotData);
         }
 
         // Check if we should generate an alert
@@ -143,18 +142,17 @@ export class SimulationManager {
         if (alert) {
           session.alertsGenerated++;
 
-          const alertPayload = {
-            type: 'alert',
-            tenant_id: tenantId,
-            vehicle_id: vehicleId,
-            timestamp: new Date().toISOString(),
-            ...alert
-          };
-
           if (onDataGenerated) {
-            await onDataGenerated(alertPayload);
+            await onDataGenerated({
+              type: 'alert',
+              tenant_id: tenantId,
+              vehicle_id: vehicleId,
+              timestamp: new Date().toISOString(),
+              ...alert
+            });
           } else {
-            await this.sendToIngestionAPI(alertPayload);
+            // Save alert directly to database
+            await this.saveAlert(tenantId, vehicleId, alert);
           }
         }
       } catch (error) {
@@ -164,40 +162,62 @@ export class SimulationManager {
   }
 
   /**
-   * Send data to the ingestion API endpoint
+   * Save vehicle IoT data directly to database
    */
-  private async sendToIngestionAPI(payload: any): Promise<void> {
+  private async saveVehicleData(data: VehicleIoTData): Promise<void> {
     try {
-      // Determine base URL - in server context we can use localhost
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ||
-                      process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` :
-                      'http://localhost:3000';
-
-      const username = process.env.NEXT_PUBLIC_WEBHOOK_USERNAME;
-      const password = process.env.NEXT_PUBLIC_WEBHOOK_PASSWORD;
-
-      if (!username || !password) {
-        console.error('[SimulationManager] Missing webhook credentials in environment');
-        return;
-      }
-
-      const credentials = Buffer.from(`${username}:${password}`).toString('base64');
-
-      const response = await fetch(`${baseUrl}/api/ingest-data`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${credentials}`
-        },
-        body: JSON.stringify(payload)
+      await db.insert(vehicleStats).values({
+        tenant_id: data.tenant_id,
+        vehicle_id: data.vehicle_id,
+        timestamp: new Date(data.timestamp),
+        rpm: data.rpm || null,
+        speed: data.speed || null,
+        engine_temp: data.engine_temp || null,
+        battery_voltage: data.battery_voltage ? data.battery_voltage.toString() : null,
+        brake_status: data.brake_status || null,
+        dtc_codes: data.dtc_codes || null,
+        fuel_level: data.fuel_level || null,
+        gps_lat: data.gps?.lat ? data.gps.lat.toString() : null,
+        gps_lng: data.gps?.lng ? data.gps.lng.toString() : null,
+        gps_accuracy: data.gps?.accuracy ? data.gps.accuracy.toString() : null,
       });
 
-      if (!response.ok) {
-        const error = await response.text();
-        console.error('[SimulationManager] Failed to send data to ingestion API:', error);
-      }
+      console.log(`[SimulationManager] Vehicle data saved: ${data.vehicle_id}`);
     } catch (error) {
-      console.error('[SimulationManager] Error sending data to ingestion API:', error);
+      console.error(`[SimulationManager] Error saving vehicle data for ${data.vehicle_id}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Save alert directly to database
+   */
+  private async saveAlert(
+    tenantId: string,
+    vehicleId: string,
+    alert: {
+      severity: 'low' | 'medium' | 'high';
+      alert_type: string;
+      description: string;
+      recommendation: string;
+    }
+  ): Promise<void> {
+    try {
+      await db.insert(alerts).values({
+        tenant_id: tenantId,
+        vehicle_id: vehicleId,
+        timestamp: new Date(),
+        severity: alert.severity,
+        alert_type: alert.alert_type,
+        description: alert.description,
+        recomendation: alert.recommendation,
+        status: 'pending',
+      });
+
+      console.log(`[SimulationManager] Alert created: ${alert.alert_type} for ${vehicleId}`);
+    } catch (error) {
+      console.error(`[SimulationManager] Error saving alert for ${vehicleId}:`, error);
+      throw error;
     }
   }
 

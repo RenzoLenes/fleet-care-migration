@@ -85,13 +85,13 @@ Componente actualizado para reflejar el uso del simulador interno.
    - Para cada vehículo configurado:
      - IoTDataSimulator genera datos realistas
      - Verifica condiciones para generar alertas
-     - Envía datos a /api/ingest-data
+     - Guarda DIRECTAMENTE en Supabase (sin HTTP)
+       ↳ db.insert(vehicleStats).values(...)
+       ↳ db.insert(alerts).values(...)
    ↓
-6. /api/ingest-data almacena en base de datos
+6. Supabase Realtime notifica a la UI
    ↓
-7. Supabase Realtime notifica a la UI
-   ↓
-8. UI actualiza en tiempo real (gráficos, alertas, etc.)
+7. UI actualiza en tiempo real (gráficos, alertas, etc.)
 ```
 
 ### Ejemplo de Datos Generados
@@ -145,18 +145,19 @@ npm install
 
 Asegúrate de tener en tu `.env`:
 ```env
-# Credenciales para el endpoint de ingestion
-NEXT_PUBLIC_WEBHOOK_USERNAME=tu_username
-NEXT_PUBLIC_WEBHOOK_PASSWORD=tu_password
-
-# Supabase
+# Supabase (REQUERIDO para el simulador)
 NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-DATABASE_URL=...
+DATABASE_URL=postgresql://...
 
-# Clerk
+# Clerk (REQUERIDO para autenticación)
 CLERK_SECRET_KEY=...
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=...
+
+# Webhook (OPCIONAL - solo si usas /api/ingest-data externamente)
+# El simulador interno NO necesita estas credenciales
+NEXT_PUBLIC_WEBHOOK_USERNAME=tu_username  # Opcional
+NEXT_PUBLIC_WEBHOOK_PASSWORD=tu_password  # Opcional
 ```
 
 ### 3. Ejecutar en desarrollo
@@ -202,6 +203,8 @@ En la consola del navegador (DevTools) verás:
 | **Escalabilidad** | ⚠️ Limitada por n8n | ✅ Multi-tenant nativo |
 | **Debugging** | ❌ Difícil | ✅ Logs detallados |
 | **Demo offline** | ❌ No posible | ✅ Funciona sin internet |
+| **Arquitectura** | ❌ HTTP requests innecesarios | ✅ Inserción directa a DB |
+| **Performance** | ⚠️ Lento (red) | ✅ Rápido (sin red) |
 
 ---
 
