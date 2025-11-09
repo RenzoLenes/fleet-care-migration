@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Play, Pause, Settings, Wifi, Activity, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -23,18 +23,19 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
   const {
     dataFlow,
     activeSensors,
-    connectionProgress,
     isConnecting,
     isSendingWebhook,
     isLoading,
     setDataFlow,
     setActiveSensors,
-    setConnectionProgress,
     setIsConnecting,
     setIsSendingWebhook,
     setIsLoading,
     updateFromServer,
   } = useSimulationStore();
+
+  // Estado local solo para animación (no necesita persistir)
+  const [connectionProgress, setConnectionProgress] = useState(0);
 
   // Ref para mantener el estado actual de active (para el cleanup)
   const activeRef = useRef(active);
@@ -63,9 +64,13 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
             active: state.active,
             dataFlow: state.dataFlow,
             activeSensors: state.activeSensors,
-            connectionProgress: state.connectionProgress,
             isConnecting: state.isConnecting,
           });
+
+          // Actualizar connectionProgress localmente si viene del servidor
+          if (state.connectionProgress !== undefined) {
+            setConnectionProgress(state.connectionProgress);
+          }
 
           // Sync the parent component's active state if different
           if (state.active !== active) {
