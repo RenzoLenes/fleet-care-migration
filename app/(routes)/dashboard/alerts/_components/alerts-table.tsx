@@ -160,7 +160,9 @@ export function AlertsTable({
                   <TableCell className="max-w-xs">
                     <div className="flex items-center gap-2">
                       {alert.llm_diagnosis && (
-                        <Brain className="h-4 w-4 text-purple-500 flex-shrink-0" title="Con diagnóstico IA" />
+                        <div title="Con diagnóstico IA">
+                          <Brain className="h-4 w-4 text-purple-500 flex-shrink-0" />
+                        </div>
                       )}
                       <p className="truncate" title={alert.description}>
                         {alert.description}

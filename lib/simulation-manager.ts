@@ -5,6 +5,19 @@ import { db } from '@/db';
 import { vehicleStats, alerts } from '@/db/schema';
 import { generateDiagnosis, type VehicleAlertContext } from './openai-service';
 
+type SimulationCallback =
+  | (VehicleIoTData & { type: 'vehicle_data' })
+  | {
+      type: 'alert';
+      tenant_id: string;
+      vehicle_id: string;
+      timestamp: string;
+      severity: 'low' | 'medium' | 'high';
+      alert_type: string;
+      description: string;
+      recommendation: string;
+    };
+
 interface SimulationSession {
   tenantId: string;
   config: DataSimulationConfig;
@@ -20,6 +33,7 @@ interface SimulationSession {
 // This ensures that even if SimulationManager is re-instantiated,
 // the sessions Map persists and we can properly clean up intervals
 declare global {
+  // eslint-disable-next-line no-var
   var __simulationSessions: Map<string, SimulationSession> | undefined;
 }
 
@@ -52,7 +66,7 @@ export class SimulationManager {
   async startSimulation(
     tenantId: string,
     config: DataSimulationConfig,
-    onDataGenerated?: (data: any) => Promise<void>
+    onDataGenerated?: (data: SimulationCallback) => Promise<void>
   ): Promise<void> {
     // Stop existing simulation if any
     if (this.sessions.has(tenantId)) {
@@ -135,7 +149,7 @@ export class SimulationManager {
    */
   private async generateDataPoints(
     session: SimulationSession,
-    onDataGenerated?: (data: any) => Promise<void>
+    onDataGenerated?: (data: SimulationCallback) => Promise<void>
   ): Promise<void> {
     const { tenantId, config, simulator } = session;
 

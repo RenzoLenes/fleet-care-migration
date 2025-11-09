@@ -28,7 +28,7 @@ export class IoTDataSimulator {
   private startingLocations = [
     { lat: -12.0464, lng: -77.0428, city: 'Lima' },      // Lima
     { lat: -16.4090, lng: -71.5375, city: 'Arequipa' },  // Arequipa
-    { lat: -13.5319, lng: -71.9675, city: 'Cuzco' },     // Cusco
+    { lat: -13.5319, lng: -71.9675, city: 'Cusco' },     // Cusco
     { lat: -8.1116, lng: -79.0288, city: 'Trujillo' },   // Trujillo
     { lat: -6.7714, lng: -79.8411, city: 'Chiclayo' },   // Chiclayo
   ];

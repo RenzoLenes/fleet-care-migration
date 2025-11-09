@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Play, Pause, Settings, Wifi, Activity, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -30,7 +30,6 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
     setActiveSensors,
     setIsConnecting,
     setIsSendingWebhook,
-    setIsLoading,
     updateFromServer,
   } = useSimulationStore();
 

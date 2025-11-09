@@ -1,12 +1,21 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { AppLayout } from '@/app/_components/layout/app-layout';
-import { FleetMap } from './_components/fleet-map';
 import { supabase } from '@/lib/supabase';
 import { useUser } from '@clerk/nextjs';
 import { Loader2 } from 'lucide-react';
+
+const FleetMap = dynamic(() => import('./_components/fleet-map').then(mod => ({ default: mod.FleetMap })), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-[600px] bg-muted/10 rounded-lg">
+      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+    </div>
+  ),
+});
 
 interface VehiclePosition {
   vehicleId: string;
@@ -85,7 +94,7 @@ export default function MapPage() {
   /**
    * Cargar posiciones de vehículos desde la base de datos
    */
-  const fetchVehiclePositions = async () => {
+  const fetchVehiclePositions = useCallback(async () => {
     try {
       if (!user) return;
 
@@ -163,8 +172,8 @@ export default function MapPage() {
 
         return {
           vehicleId: stat.vehicle_id,
-          lat: parseFloat(stat.gps_lat as any), // Convertir string a número
-          lng: parseFloat(stat.gps_lng as any), // Convertir string a número
+          lat: typeof stat.gps_lat === 'string' ? parseFloat(stat.gps_lat) : (stat.gps_lat || 0),
+          lng: typeof stat.gps_lng === 'string' ? parseFloat(stat.gps_lng) : (stat.gps_lng || 0),
           speed: stat.speed || undefined,
           status,
           lastUpdate,
@@ -200,7 +209,7 @@ export default function MapPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   /**
    * Suscripción a cambios en tiempo real
@@ -214,7 +223,7 @@ export default function MapPage() {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [user]);
+  }, [fetchVehiclePositions]);
 
   /**
    * Navegar a detalles del vehículo
