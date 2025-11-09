@@ -40,16 +40,18 @@ export default function MapPage() {
   const [loading, setLoading] = useState(true);
 
   /**
-   * Determinar el estado del vehículo basado en alertas recientes
+   * Determinar el estado del vehículo basado en alertas recientes y última actualización
    */
   const getVehicleStatus = (
     vehicleId: string,
     alerts: Alert[],
     lastUpdate: Date
   ): VehiclePosition['status'] => {
-    // Offline si no hay datos en los últimos 5 minutos
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-    if (lastUpdate < fiveMinutesAgo) {
+    // Offline si no hay datos en los últimos 2 minutos (más del doble del intervalo de envío)
+    // Nota: La simulación envía datos cada ~5 segundos, así que 2 minutos es tiempo suficiente
+    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+    if (lastUpdate < twoMinutesAgo) {
+      console.log(`[MapPage] Vehicle ${vehicleId} is offline - last update: ${lastUpdate.toISOString()}`);
       return 'offline';
     }
 
@@ -151,16 +153,22 @@ export default function MapPage() {
         });
 
       setVehicles(vehiclePositions);
-      console.log(`[MapPage] Loaded ${vehiclePositions.length} vehicle positions`);
 
-      // Debug: Mostrar posiciones actuales
-      if (vehiclePositions.length > 0) {
-        console.log('[MapPage] Vehicle positions:', vehiclePositions.map(v => ({
+      // Contar vehículos por estado
+      const statusCounts = vehiclePositions.reduce((acc, v) => {
+        acc[v.status] = (acc[v.status] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      console.log(`[MapPage] Loaded ${vehiclePositions.length} vehicles - Status:`, statusCounts);
+
+      // Debug: Mostrar vehículos offline con detalles
+      const offlineVehicles = vehiclePositions.filter(v => v.status === 'offline');
+      if (offlineVehicles.length > 0) {
+        console.log('[MapPage] Offline vehicles:', offlineVehicles.map(v => ({
           id: v.vehicleId,
-          lat: v.lat,
-          lng: v.lng,
-          speed: v.speed,
-          status: v.status
+          lastUpdate: v.lastUpdate.toISOString(),
+          minutesSinceUpdate: Math.round((Date.now() - v.lastUpdate.getTime()) / 60000)
         })));
       }
     } catch (error) {
