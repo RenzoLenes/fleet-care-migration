@@ -28,6 +28,10 @@ export const vehicleStats = pgTable('vehicle_stats', {
   dtc_codes: jsonb('dtc_codes'), // Usamos jsonb para array de strings
   battery_voltage: numeric('battery_voltage', { precision: 5, scale: 2 }),
   brake_status: text('brake_status'),
+  fuel_level: integer('fuel_level'), // Porcentaje 0-100
+  gps_lat: numeric('gps_lat', { precision: 10, scale: 7 }), // Latitud
+  gps_lng: numeric('gps_lng', { precision: 10, scale: 7 }), // Longitud
+  gps_accuracy: numeric('gps_accuracy', { precision: 6, scale: 2 }), // Precisión en metros
   created_at: timestamp('created_at').notNull().defaultNow(),
 });
 

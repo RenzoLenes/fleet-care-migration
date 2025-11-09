@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Play, Pause, Settings, Wifi, Activity, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { Tenant } from './dashboard-view';
+import { useSimulationStore } from '@/lib/stores/simulation-store';
 
 interface SimulationControlProps {
   active: boolean;
@@ -18,41 +19,35 @@ interface SimulationControlProps {
 }
 
 export function SimulationControl({ active, onToggle, tenant }: SimulationControlProps) {
-  const [dataFlow, setDataFlow] = useState(active);
-  const [activeSensors, setActiveSensors] = useState(active ? 98 : 0);
-  const [connectionProgress, setConnectionProgress] = useState(active ? 100 : 0);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [isSendingWebhook, setIsSendingWebhook] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  // Zustand store - persiste entre navegaciones
+  const {
+    dataFlow,
+    activeSensors,
+    isConnecting,
+    isSendingWebhook,
+    isLoading,
+    setDataFlow,
+    setActiveSensors,
+    setIsConnecting,
+    setIsSendingWebhook,
+    setIsLoading,
+    updateFromServer,
+  } = useSimulationStore();
+
+  // Estado local solo para animación (no necesita persistir)
+  const [connectionProgress, setConnectionProgress] = useState(0);
+
+  // Ref para mantener el estado actual de dataFlow (para el cleanup)
+  const dataFlowRef = useRef(dataFlow);
+  const tenantRef = useRef(tenant);
 
   const totalSensors = 127;
 
-  // Función para obtener el estado actual desde el backend
-  const fetchCurrentState = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch('/api/simulation');
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && result.state) {
-          const state = result.state;
-          setDataFlow(state.dataFlow);
-          setActiveSensors(state.activeSensors);
-          setConnectionProgress(state.connectionProgress);
-          setIsConnecting(state.isConnecting);
-          
-          // Sync the parent component's active state if different
-          if (state.active !== active) {
-            onToggle(state.active);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching simulation state:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [active, onToggle]);
+  // Actualizar refs cuando cambian los valores
+  useEffect(() => {
+    dataFlowRef.current = dataFlow;
+    tenantRef.current = tenant;
+  }, [dataFlow, tenant]);
 
   // Función para enviar webhook a través de nuestra API route
   const sendWebhookToN8n = async (status: boolean) => {
@@ -70,10 +65,9 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
           tenant: tenant,
           config: {
             vehicles: ["BUS-001", "BUS-002", "BUS-003", "BUS-004", "BUS-005"],
-            interval: 5,
-            duration: 5
+            interval: 5,    // Genera datos cada 5 segundos
+            duration: 0     // 0 = ilimitado (hasta que usuario lo detenga)
           }
-
         })
       });
 
@@ -84,18 +78,19 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
       }
 
       if (result.success) {
-        toast.success('Estado enviado a n8n', {
+        toast.success('Simulador actualizado', {
           description: result.message
         });
       } else {
-        toast.error('Error al comunicar con n8n', {
+        console.error('[SimulationControl] Server error:', result.error);
+        toast.error('Error al actualizar simulador', {
           description: result.error || 'Error desconocido'
         });
       }
 
     } catch (error) {
-      console.error('Error enviando webhook:', error);
-      toast.error('Error al comunicar con n8n', {
+      console.error('[SimulationControl] Error:', error);
+      toast.error('Error al actualizar simulador', {
         description: error instanceof Error ? error.message : 'Error desconocido'
       });
     } finally {
@@ -103,56 +98,111 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
     }
   };
 
-  // Fetch current state on component mount
+  // Sincronizar con servidor al montar (solo UNA vez)
+  // IMPORTANTE: NO sobrescribir si el usuario tiene estado guardado en localStorage
+  // porque el SimulationManager puede perder su estado en hot reloads de desarrollo
   useEffect(() => {
-    fetchCurrentState();
-  }, [fetchCurrentState]);
+    // Solo sincronizar si el estado local está en "inicial" (nunca activado)
+    // Si dataFlow es true (de localStorage), confiar en el estado local
+    if (!dataFlow && activeSensors === 0) {
+      // Sync silencioso - no muestra loading, no bloquea UI
+      const syncWithServer = async () => {
+        try {
+          const response = await fetch('/api/simulation');
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success && result.state) {
+              const state = result.state;
 
+              // Actualizar desde servidor solo en carga inicial
+              updateFromServer({
+                active: state.active,
+                dataFlow: state.dataFlow,
+                activeSensors: state.activeSensors,
+                isConnecting: state.isConnecting,
+              });
+
+              // Sync the parent component's active state if different
+              if (state.active !== active) {
+                onToggle(state.active);
+              }
+            }
+          }
+        } catch (error) {
+          console.error('[SimulationControl] Error syncing with server:', error);
+        }
+      };
+
+      syncWithServer();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);  // Solo al montar, sin dependencies que causen re-ejecución
+
+  // Connection progress animation (only for visual feedback during activation)
   useEffect(() => {
-    if (!isLoading) {
-      if (active) {
+    if (!isConnecting) return;
+
+    // Iniciar animación de 0 a 100
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 10;
+      setConnectionProgress(progress);
+
+      if (progress >= 100) {
+        clearInterval(interval);
+        // Completar conexión
+        setIsConnecting(false);
         setDataFlow(true);
         setActiveSensors(98);
-        setConnectionProgress(100);
-        setIsConnecting(false);
-      } else {
-        setDataFlow(false);
-        setActiveSensors(0);
-        setConnectionProgress(0);
-        setIsConnecting(false);
       }
-    }
-  }, [active, isLoading]);
+    }, 200);
 
+    return () => {
+      clearInterval(interval);
+    };
+    // Solo ejecutar cuando isConnecting cambia a true
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isConnecting]);
+
+  // Cleanup: detener simulación SOLO cuando usuario cierra/refresca página
+  // NO se ejecuta al navegar internamente (ej: ir a /alerts)
   useEffect(() => {
-    if (active && !dataFlow && connectionProgress < 100) {
-      setIsConnecting(true);
-      setConnectionProgress(0);
+    const handleBeforeUnload = () => {
+      // Solo ejecutar si la simulación está activa (usar dataFlow de Zustand)
+      if (dataFlowRef.current) {
+        console.log('[SimulationControl] Page unloading, stopping simulation...');
 
-      const interval = setInterval(() => {
-        setConnectionProgress(prev => {
-          if (prev >= 100) {
-            clearInterval(interval);
-            setIsConnecting(false);
-            setDataFlow(true);
-            setActiveSensors(98);
-            return 100;
+        // Detener simulación en el servidor
+        // navigator.sendBeacon es más confiable que fetch para beforeunload
+        const payload = JSON.stringify({
+          status: 'desactivado',
+          sensor_count: 0,
+          tenant: tenantRef.current,
+          config: {
+            vehicles: [],
+            interval: 0,
+            duration: 0
           }
-          return prev + 10;
         });
-      }, 200);
 
-      return () => clearInterval(interval);
-    } else if (!active) {
-      setDataFlow(false);
-      setActiveSensors(0);
-      setConnectionProgress(0);
-      setIsConnecting(false);
-    }
-  }, [active, dataFlow, connectionProgress]);
+        // sendBeacon asegura que se envíe aunque la página se cierre
+        navigator.sendBeacon(
+          '/api/simulation',
+          new Blob([payload], { type: 'application/json' })
+        );
+      }
+    };
+
+    // beforeunload se dispara SOLO al cerrar/refrescar, NO al navegar dentro de la app
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
 
   const handleToggle = () => {
-    const newState = !active;
+    const newState = !dataFlow;  // Usar estado de Zustand, no prop del padre
 
     if (!newState) {
       toast('¿Desactivar simulación?', {
@@ -160,10 +210,15 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
         action: {
           label: 'Confirmar',
           onClick: async () => {
+            // Actualizar Zustand store inmediatamente para feedback visual
+            setDataFlow(false);
+            setActiveSensors(0);
+            setIsConnecting(false);
+            setConnectionProgress(0);
+
             onToggle(newState);
             await sendWebhookToN8n(newState);
-            // Refresh state after successful webhook
-            await fetchCurrentState();
+
             toast.success('Simulación desactivada', {
               description: 'Sensores desconectados y flujos pausados'
             });
@@ -175,11 +230,13 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
         }
       });
     } else {
+      // Actualizar Zustand store inmediatamente para feedback visual
+      setIsConnecting(true);
+      setConnectionProgress(0);
+
       onToggle(newState);
-      sendWebhookToN8n(newState).then(() => {
-        // Refresh state after successful webhook
-        fetchCurrentState();
-      });
+      sendWebhookToN8n(newState);
+
       toast.success('Iniciando simulación...', {
         description: 'Conectando con los sensores IoT'
       });
@@ -188,13 +245,13 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
 
   const getStatusColor = () => {
     if (isConnecting) return 'bg-yellow-500';
-    if (active && dataFlow) return 'bg-green-500';
+    if (dataFlow) return 'bg-green-500';  // Solo usar Zustand state
     return 'bg-gray-400';
   };
 
   const getStatusText = () => {
     if (isConnecting) return 'Conectando...';
-    if (active && dataFlow) return 'Activo';
+    if (dataFlow) return 'Activo';  // Solo usar Zustand state
     return 'Inactivo';
   };
 
@@ -221,7 +278,7 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
             <Badge
               className={`rounded-full px-3 py-1 font-semibold ${isConnecting
                 ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
-                : active && dataFlow
+                : dataFlow
                   ? 'bg-green-100 text-green-800 border-green-200'
                   : 'bg-gray-100 text-gray-800 border-gray-200'
                 }`}
@@ -238,7 +295,7 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
               <div className={`p-3 rounded-lg shadow-md ${getStatusColor()}`}>
                 {isConnecting ? (
                   <Activity className="h-5 w-5 text-white animate-pulse" />
-                ) : active ? (
+                ) : dataFlow ? (
                   <Play className="h-5 w-5 text-white" />
                 ) : (
                   <Pause className="h-5 w-5 text-white" />
@@ -246,16 +303,16 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
               </div>
               <div>
                 <p className="font-semibold text-gray-800">
-                  {isConnecting ? 'Estableciendo conexión...' : active ? "Simulación activa" : "Simulación pausada"}
+                  {isConnecting ? 'Estableciendo conexión...' : dataFlow ? "Simulación activa" : "Simulación pausada"}
                 </p>
                 <p className="text-sm text-gray-600">
-                  {isConnecting ? 'Configurando sensores' : active ? "Recibiendo datos en tiempo real" : "Flujos de datos detenidos"}
+                  {isConnecting ? 'Configurando sensores' : dataFlow ? "Recibiendo datos en tiempo real" : "Flujos de datos detenidos"}
                 </p>
               </div>
             </div>
             <Switch
               className='fleetcare-switch'
-              checked={active}
+              checked={dataFlow}
               onCheckedChange={handleToggle}
               disabled={isConnecting || isSendingWebhook || isLoading}
             />
@@ -286,7 +343,7 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
               <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-blue-100">
                 <div className="flex items-center space-x-3">
                   <Wifi className={`h-4 w-4 ${dataFlow ? "text-green-500" : "text-gray-400"}`} />
-                  <span className="font-medium text-gray-700 text-sm">Flujo n8n</span>
+                  <span className="font-medium text-gray-700 text-sm">Simulador IoT</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   {dataFlow ? (
@@ -320,7 +377,7 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
           </div>
 
           {/* Información de Persistencia */}
-          {active && (
+          {dataFlow && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -336,7 +393,7 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
           )}
 
           {/* Métricas Adicionales */}
-          {active && dataFlow && (
+          {dataFlow && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}

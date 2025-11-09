@@ -9,6 +9,7 @@ import { SimulationModalSkeleton } from './dashboard-skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../../../../components/ui/button';
 import { Settings, X } from 'lucide-react';
+import { useSimulationStore } from '@/lib/stores/simulation-store';
 
 export interface Tenant {
   id: string,
@@ -23,7 +24,9 @@ interface DashboardViewProps {
 }
 
 export function DashboardView({ refreshTrigger }: DashboardViewProps) {
-  const [simulationActive, setSimulationActive] = useState(false);
+  // Usar Zustand en lugar de useState local
+  const { dataFlow: simulationActive, setDataFlow } = useSimulationStore();
+
   const [showSimulationModal, setShowSimulationModal] = useState(false);
   const [tenant, setTenant] = useState<Tenant | null>();
   const [isLoadingTenant, setIsLoadingTenant] = useState(true);
@@ -63,8 +66,8 @@ export function DashboardView({ refreshTrigger }: DashboardViewProps) {
 
   // Función para manejar el cambio de estado de la simulación
   const handleSimulationToggle = (active: boolean) => {
-    setSimulationActive(active);
-    // El estado persiste incluso si se cierra el modal
+    setDataFlow(active);
+    // El estado persiste en Zustand + localStorage
   };
 
   return (
