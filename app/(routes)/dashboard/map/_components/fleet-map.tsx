@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -38,16 +38,18 @@ interface FleetMapProps {
  */
 function MapController({ vehicles }: { vehicles: VehiclePosition[] }) {
   const map = useMap();
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    if (vehicles.length > 0) {
-      // Calcular bounds para mostrar todos los vehículos
+    // Solo hacer fitBounds la primera vez que se cargan vehículos
+    if (vehicles.length > 0 && !initialized) {
       const bounds = L.latLngBounds(
         vehicles.map(v => [v.lat, v.lng] as L.LatLngTuple)
       );
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 13 });
+      setInitialized(true);
     }
-  }, [vehicles, map]);
+  }, [vehicles, map, initialized]);
 
   return null;
 }
@@ -152,7 +154,7 @@ export function FleetMap({
 
             {vehicles.map((vehicle) => (
               <Marker
-                key={vehicle.vehicleId}
+                key={`${vehicle.vehicleId}-${vehicle.lat}-${vehicle.lng}`}
                 position={[vehicle.lat, vehicle.lng]}
                 icon={getVehicleIcon(vehicle.status)}
               >

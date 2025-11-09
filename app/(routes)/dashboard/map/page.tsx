@@ -142,8 +142,8 @@ export default function MapPage() {
 
           return {
             vehicleId: stat.vehicle_id,
-            lat: stat.gps_lat!,
-            lng: stat.gps_lng!,
+            lat: parseFloat(stat.gps_lat as any), // Convertir string a número
+            lng: parseFloat(stat.gps_lng as any), // Convertir string a número
             speed: stat.speed || undefined,
             status,
             lastUpdate,
@@ -152,6 +152,17 @@ export default function MapPage() {
 
       setVehicles(vehiclePositions);
       console.log(`[MapPage] Loaded ${vehiclePositions.length} vehicle positions`);
+
+      // Debug: Mostrar posiciones actuales
+      if (vehiclePositions.length > 0) {
+        console.log('[MapPage] Vehicle positions:', vehiclePositions.map(v => ({
+          id: v.vehicleId,
+          lat: v.lat,
+          lng: v.lng,
+          speed: v.speed,
+          status: v.status
+        })));
+      }
     } catch (error) {
       console.error('[MapPage] Error in fetchVehiclePositions:', error);
     } finally {
