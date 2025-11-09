@@ -1,4 +1,4 @@
-import { pgTable, text, uuid, timestamp, integer, numeric, jsonb, varchar } from 'drizzle-orm/pg-core';
+import { pgTable, text, uuid, timestamp, integer, numeric, jsonb, varchar, boolean } from 'drizzle-orm/pg-core';
 
 // Tabla tenants
 export const tenants = pgTable('tenants', {
@@ -46,6 +46,13 @@ export const alerts = pgTable('alerts', {
   description: text('description').notNull(),
   recomendation: text('recomendation').notNull(),
   status: text('status').notNull().default('pending'),
+  // Campos LLM para diagnósticos inteligentes (Fase 1)
+  llm_diagnosis: text('llm_diagnosis'),
+  llm_recommendations: jsonb('llm_recommendations'),
+  llm_severity: text('llm_severity'), // low, medium, high, critical
+  llm_cost: numeric('llm_cost', { precision: 10, scale: 6 }), // USD
+  llm_tokens: integer('llm_tokens'),
+  llm_cached: boolean('llm_cached').default(false),
   created_at: timestamp('created_at').notNull().defaultNow(),
   updated_at: timestamp('updated_at').notNull().defaultNow(),
 });

@@ -30,4 +30,11 @@ export interface RealtimeAlert {
     status: 'pending' | 'acknowledged' | 'in_progress' | 'resolved';
     created_at: string;
     updated_at: string;
+    // LLM intelligent diagnosis fields (Fase 1)
+    llm_diagnosis?: string | null;
+    llm_recommendations?: string[] | null; // Array deserializado desde JSONB
+    llm_severity?: 'low' | 'medium' | 'high' | 'critical' | null;
+    llm_cost?: string | null; // numeric as string
+    llm_tokens?: number | null;
+    llm_cached?: boolean | null;
   }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from 'next/navigation';
-import { Eye, CheckCircle, AlertCircle, Clock, MessageSquare } from 'lucide-react';
+import { Eye, CheckCircle, AlertCircle, Clock, MessageSquare, Brain } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -22,6 +22,7 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { AlertsTableSkeleton } from './alerts-skeleton';
+import { AlertDetailDialog } from './alert-detail-dialog';
 import { type RealtimeAlert } from '@/lib/supabase';
 import * as React from 'react';
 
@@ -40,15 +41,22 @@ interface AlertsTableProps {
   };
 }
 
-export function AlertsTable({ 
-  alerts, 
-  loading, 
-  onResolveAlert, 
-  severityFilter, 
+export function AlertsTable({
+  alerts,
+  loading,
+  onResolveAlert,
+  severityFilter,
   statusFilter,
   pagination
 }: AlertsTableProps) {
   const router = useRouter();
+  const [selectedAlert, setSelectedAlert] = React.useState<RealtimeAlert | null>(null);
+  const [dialogOpen, setDialogOpen] = React.useState(false);
+
+  const handleViewAlert = (alert: RealtimeAlert) => {
+    setSelectedAlert(alert);
+    setDialogOpen(true);
+  };
 
   const getSeverityBadge = (severity: string) => {
     switch (severity) {
@@ -150,9 +158,14 @@ export function AlertsTable({
                     {getSeverityBadge(alert.severity)}
                   </TableCell>
                   <TableCell className="max-w-xs">
-                    <p className="truncate" title={alert.description}>
-                      {alert.description}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      {alert.llm_diagnosis && (
+                        <Brain className="h-4 w-4 text-purple-500 flex-shrink-0" title="Con diagnóstico IA" />
+                      )}
+                      <p className="truncate" title={alert.description}>
+                        {alert.description}
+                      </p>
+                    </div>
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className="text-xs">
@@ -170,13 +183,17 @@ export function AlertsTable({
                   </TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleViewAlert(alert)}
+                      >
                         <Eye className="h-4 w-4 mr-1" />
                         Ver
                       </Button>
                       {alert.status !== 'resolved' && (
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           onClick={() => onResolveAlert(alert.id)}
                         >
@@ -261,6 +278,13 @@ export function AlertsTable({
         </Pagination>
       </div>
     )}
+
+    {/* Alert Detail Dialog */}
+    <AlertDetailDialog
+      alert={selectedAlert}
+      open={dialogOpen}
+      onOpenChange={setDialogOpen}
+    />
   </div>
   );
 }

@@ -37,6 +37,9 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
   // Estado local solo para animación (no necesita persistir)
   const [connectionProgress, setConnectionProgress] = useState(0);
 
+  // Estado para probabilidad de errores (0 a 1)
+  const [errorProbability, setErrorProbability] = useState(0.3); // Default: 30%
+
   // Ref para mantener el estado actual de dataFlow (para el cleanup)
   const dataFlowRef = useRef(dataFlow);
   const tenantRef = useRef(tenant);
@@ -66,7 +69,8 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
           config: {
             vehicles: ["BUS-001", "BUS-002", "BUS-003", "BUS-004", "BUS-005"],
             interval: 5,    // Genera datos cada 5 segundos
-            duration: 0     // 0 = ilimitado (hasta que usuario lo detenga)
+            duration: 0,    // 0 = ilimitado (hasta que usuario lo detenga)
+            errorProbability: status ? errorProbability : 0.3 // Enviar probabilidad de errores
           }
         })
       });
@@ -316,6 +320,56 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
               onCheckedChange={handleToggle}
               disabled={isConnecting || isSendingWebhook || isLoading}
             />
+          </div>
+
+          {/* Control de Probabilidad de Errores */}
+          <div className="space-y-3 p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl border border-orange-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-orange-600" />
+                <label className="font-semibold text-gray-800 text-sm">
+                  Probabilidad de Errores
+                </label>
+              </div>
+              <Badge
+                variant="outline"
+                className={`${
+                  errorProbability >= 0.7 ? 'bg-red-100 text-red-700 border-red-300' :
+                  errorProbability >= 0.4 ? 'bg-orange-100 text-orange-700 border-orange-300' :
+                  'bg-green-100 text-green-700 border-green-300'
+                }`}
+              >
+                {Math.round(errorProbability * 100)}%
+              </Badge>
+            </div>
+
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={errorProbability * 100}
+              onChange={(e) => setErrorProbability(parseInt(e.target.value) / 100)}
+              disabled={dataFlow} // No se puede cambiar mientras la simulación está activa
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed
+                [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4
+                [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-orange-500
+                [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md
+                [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full
+                [&::-moz-range-thumb]:bg-orange-500 [&::-moz-range-thumb]:cursor-pointer
+                [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:shadow-md"
+            />
+
+            <div className="flex justify-between text-xs text-gray-600">
+              <span>Sin errores (0%)</span>
+              <span>Máximo errores (100%)</span>
+            </div>
+
+            <p className="text-xs text-gray-600 mt-2">
+              {dataFlow
+                ? '⚠️ Detén la simulación para ajustar este valor'
+                : 'Ajusta la frecuencia de alertas y problemas del simulador IoT'
+              }
+            </p>
           </div>
 
           {/* Progreso de Conexión */}

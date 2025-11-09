@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase, type RealtimeAlert } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { RealtimeChannel } from '@supabase/supabase-js';
-import { playAlertSound } from '@/lib/sound';
+// playAlertSound ya no se usa aquí - lo maneja GlobalAlertListener
 
 interface AlertsStats {
     critical: number;
@@ -154,16 +154,10 @@ export function useAlerts(severityFilter: string = 'all', statusFilter: string =
                                         if (exists) return prev;
                                         return [alertData, ...prev];
                                     });
-                                    
-                                    // Play sound based on alert severity
-                                    const soundType = alertData.severity === 'high' ? 'critical' 
-                                                    : alertData.severity === 'medium' ? 'warning' 
-                                                    : 'info';
-                                    playAlertSound(soundType);
-                                    
-                                    toast.info('Nueva alerta recibida', {
-                                        description: `${alertData.vehicle_id}: ${alertData.description}`
-                                    });
+
+                                    // NOTA: El sonido y toast ahora se manejan en GlobalAlertListener
+                                    // para evitar duplicados y que funcione en todas las páginas
+
                                     fetchStats();
                                     break;
 

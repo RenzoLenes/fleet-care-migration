@@ -18,19 +18,36 @@ interface VehicleState {
 
 export class IoTDataSimulator {
   private vehicleStates: Map<string, VehicleState> = new Map();
+  private errorProbability: number = 0.3; // Default: 30% de probabilidad de errores (0 = sin errores, 1 = máximo errores)
   private dtcCodes = [
     'P0300', 'P0420', 'P0171', 'P0455', 'P0128',
     'P0101', 'P0134', 'P0174', 'P0401', 'P0442'
   ];
 
-  // Starting locations for different vehicles (Colombian cities)
+  // Starting locations for different vehicles (Peruvian cities / Ciudades peruanas)
   private startingLocations = [
-    { lat: 4.7110, lng: -74.0721, city: 'Bogotá' },      // Bogotá
-    { lat: 6.2476, lng: -75.5658, city: 'Medellín' },    // Medellín
-    { lat: 3.4516, lng: -76.5320, city: 'Cali' },        // Cali
-    { lat: 11.0041, lng: -74.8070, city: 'Barranquilla' }, // Barranquilla
-    { lat: 7.1193, lng: -73.1227, city: 'Bucaramanga' }, // Bucaramanga
+    { lat: -12.0464, lng: -77.0428, city: 'Lima' },      // Lima
+    { lat: -16.4090, lng: -71.5375, city: 'Arequipa' },  // Arequipa
+    { lat: -13.5319, lng: -71.9675, city: 'Cusco' },     // Cusco
+    { lat: -8.1116, lng: -79.0288, city: 'Trujillo' },   // Trujillo
+    { lat: -6.7714, lng: -79.8411, city: 'Chiclayo' },   // Chiclayo
   ];
+
+  /**
+   * Set error probability multiplier (0 to 1)
+   * 0 = no errors, 0.5 = medium probability, 1 = maximum errors
+   */
+  setErrorProbability(probability: number): void {
+    this.errorProbability = Math.max(0, Math.min(1, probability)); // Clamp between 0 and 1
+    console.log(`[IoTDataSimulator] Error probability set to ${(this.errorProbability * 100).toFixed(0)}%`);
+  }
+
+  /**
+   * Get current error probability
+   */
+  getErrorProbability(): number {
+    return this.errorProbability;
+  }
 
   /**
    * Initialize a vehicle with random starting parameters
@@ -39,6 +56,12 @@ export class IoTDataSimulator {
     const location = this.startingLocations[Math.floor(Math.random() * this.startingLocations.length)];
     const patterns: Array<'city' | 'highway' | 'idle' | 'mixed'> = ['city', 'highway', 'idle', 'mixed'];
 
+    // Ajustar valores iniciales basados en errorProbability
+    // errorProbability alto = más probabilidad de empezar con valores problemáticos
+    const batteryBase = 12.6 - (this.errorProbability * 0.4); // Con prob=1: 12.2V (cerca del límite de alerta 12.0V)
+    const fuelBase = 65 - (this.errorProbability * 30); // Con prob=1: 35% (más cerca del límite 15%)
+    const brakeWearMax = 15 + (this.errorProbability * 35); // Con prob=1: hasta 50% de desgaste inicial
+
     this.vehicleStates.set(vehicleId, {
       vehicleId,
       currentLat: location.lat + (Math.random() - 0.5) * 0.1, // ±0.05 degrees variation
@@ -46,9 +69,9 @@ export class IoTDataSimulator {
       currentSpeed: 0,
       currentRpm: 800 + Math.random() * 200, // Idle RPM
       currentEngineTemp: 20 + Math.random() * 10, // Starting cold
-      currentBatteryVoltage: 12.4 + Math.random() * 0.4,
-      currentFuelLevel: 40 + Math.random() * 60,
-      brakeWear: Math.random() * 30, // 0-30% wear
+      currentBatteryVoltage: batteryBase + Math.random() * 0.4,
+      currentFuelLevel: fuelBase + Math.random() * 35,
+      brakeWear: Math.random() * brakeWearMax,
       mileage: Math.floor(50000 + Math.random() * 150000),
       lastMaintenanceKm: Math.floor(48000 + Math.random() * 145000),
       pattern: patterns[Math.floor(Math.random() * patterns.length)]
@@ -69,9 +92,11 @@ export class IoTDataSimulator {
     // Update vehicle state based on pattern
     this.updateVehicleState(state);
 
-    // Generate DTC codes (5% chance per reading)
+    // Generate DTC codes con probabilidad ajustada por errorProbability
+    // Base: 0.5%, con errorProbability=1 puede llegar hasta 5%
     const dtcCodes: string[] = [];
-    if (Math.random() < 0.05) {
+    const dtcProbability = 0.005 + (this.errorProbability * 0.045); // 0.5% a 5%
+    if (Math.random() < dtcProbability) {
       const numCodes = Math.floor(Math.random() * 2) + 1;
       for (let i = 0; i < numCodes; i++) {
         dtcCodes.push(this.dtcCodes[Math.floor(Math.random() * this.dtcCodes.length)]);
@@ -150,9 +175,9 @@ export class IoTDataSimulator {
     // Update mileage
     state.mileage += state.currentSpeed / 3600; // speed in km/h to km per reading
 
-    // Gradually increase brake wear
+    // Gradually increase brake wear (reducido de 0.001 a 0.0001 para menos alertas)
     if (state.currentSpeed > 20) {
-      state.brakeWear += 0.001;
+      state.brakeWear += 0.0001;
     }
 
     // Occasionally change pattern (10% chance)
@@ -178,7 +203,9 @@ export class IoTDataSimulator {
     }
 
     // Engine temp rises slowly in city
-    const targetTemp = 85 + Math.random() * 10;
+    // Con errorProbability alto, puede alcanzar temperaturas más altas (potencial sobrecalentamiento)
+    const tempBase = 80 + (this.errorProbability * 10); // 80-90°C base según probabilidad
+    const targetTemp = tempBase + Math.random() * (10 + this.errorProbability * 10); // +10 a +20°C aleatorio
     state.currentEngineTemp += (targetTemp - state.currentEngineTemp) * 0.05;
 
     // Battery voltage stable
@@ -197,7 +224,9 @@ export class IoTDataSimulator {
     state.currentRpm = 2000 + state.currentSpeed * 20 + Math.random() * 300;
 
     // Engine temp higher on highway
-    const targetTemp = 90 + Math.random() * 8;
+    // Con errorProbability alto, puede alcanzar temperaturas críticas (>100°C)
+    const tempBase = 85 + (this.errorProbability * 12); // 85-97°C base según probabilidad
+    const targetTemp = tempBase + Math.random() * (7 + this.errorProbability * 8); // +7 a +15°C aleatorio
     state.currentEngineTemp += (targetTemp - state.currentEngineTemp) * 0.05;
 
     // Battery charging well

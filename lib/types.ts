@@ -12,6 +12,7 @@ export interface DataSimulationConfig {
   vehicles: Array<string>;
   interval: number; // in seconds
   duration: number; // in seconds
+  errorProbability?: number; // 0 to 1 - Probability multiplier for errors/alerts (0 = no errors, 1 = maximum errors)
 }
 
 export interface Vehicle {

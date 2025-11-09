@@ -7,7 +7,8 @@ import {
   Truck,
   AlertTriangle,
   Settings,
-  X
+  X,
+  MapPin
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -23,6 +24,7 @@ interface SidebarProps {
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Vehículos', href: '/dashboard/vehicles', icon: Truck },
+  { name: 'Mapa', href: '/dashboard/map', icon: MapPin },
   { name: 'Alertas', href: '/dashboard/alerts', icon: AlertTriangle },
   { name: 'Configuración', href: '/dashboard/settings', icon: Settings },
 ];
