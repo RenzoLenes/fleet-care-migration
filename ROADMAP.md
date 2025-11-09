@@ -39,18 +39,19 @@ Integrar un LLM (OpenAI o4-mini) como "mecánico experto" para analizar datos de
 ### Tareas Técnicas
 
 #### 1.1 Configuración de OpenAI
-- [ ] Instalar SDK de OpenAI
-- [ ] Configurar API keys en `.env`
-- [ ] Crear servicio `lib/openai-service.ts`
-- [ ] Implementar rate limiting y manejo de errores
+- [x] Instalar SDK de OpenAI
+- [x] Configurar API keys en `.env` (creado `.env.example`)
+- [x] Crear servicio `lib/openai-service.ts`
+- [x] Implementar rate limiting y manejo de errores
 
 #### 1.2 Sistema de Prompt Engineering
-- [ ] Diseñar prompt base para mecánico experto
-- [ ] Template con contexto del vehículo:
-  - Histórico de datos (últimas 10 lecturas)
-  - Alertas previas
-  - Kilometraje/horas de uso
-- [ ] Formato de respuesta estructurada (JSON)
+- [x] Diseñar prompt base para mecánico experto
+- [x] Template con contexto del vehículo:
+  - [x] Datos actuales del sensor
+  - [x] Histórico de datos (últimas N lecturas)
+  - [ ] Alertas previas
+  - [ ] Kilometraje/horas de uso
+- [x] Formato de respuesta estructurada (JSON)
 - [ ] Ejemplos few-shot para mejorar calidad
 
 #### 1.3 Implementación de Prompt Caching
@@ -71,8 +72,8 @@ Integrar un LLM (OpenAI o4-mini) como "mecánico experto" para analizar datos de
 
 #### 1.5 Sistema de Fallback
 - [ ] Si LLM falla, usar descripción básica por reglas
-- [ ] Retry logic con exponential backoff
-- [ ] Logging de errores y costos
+- [x] Retry logic con exponential backoff
+- [x] Logging de errores y costos
 
 ### Criterios de Éxito
 - ✅ Alertas generadas tienen diagnóstico detallado del LLM
