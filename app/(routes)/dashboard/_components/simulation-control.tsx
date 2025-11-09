@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { Play, Pause, Settings, Wifi, Activity, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { Tenant } from './dashboard-view';
+import { useSimulationStore } from '@/lib/stores/simulation-store';
 
 interface SimulationControlProps {
   active: boolean;
@@ -18,12 +19,22 @@ interface SimulationControlProps {
 }
 
 export function SimulationControl({ active, onToggle, tenant }: SimulationControlProps) {
-  const [dataFlow, setDataFlow] = useState(false);  // Inicializar en false hasta consultar servidor
-  const [activeSensors, setActiveSensors] = useState(0);  // Inicializar en 0
-  const [connectionProgress, setConnectionProgress] = useState(0);  // Inicializar en 0
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [isSendingWebhook, setIsSendingWebhook] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  // Zustand store - persiste entre navegaciones
+  const {
+    dataFlow,
+    activeSensors,
+    connectionProgress,
+    isConnecting,
+    isSendingWebhook,
+    isLoading,
+    setDataFlow,
+    setActiveSensors,
+    setConnectionProgress,
+    setIsConnecting,
+    setIsSendingWebhook,
+    setIsLoading,
+    updateFromServer,
+  } = useSimulationStore();
 
   // Ref para mantener el estado actual de active (para el cleanup)
   const activeRef = useRef(active);
@@ -46,11 +57,16 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
         const result = await response.json();
         if (result.success && result.state) {
           const state = result.state;
-          setDataFlow(state.dataFlow);
-          setActiveSensors(state.activeSensors);
-          setConnectionProgress(state.connectionProgress);
-          setIsConnecting(state.isConnecting);
-          
+
+          // Actualizar todo el store de una vez
+          updateFromServer({
+            active: state.active,
+            dataFlow: state.dataFlow,
+            activeSensors: state.activeSensors,
+            connectionProgress: state.connectionProgress,
+            isConnecting: state.isConnecting,
+          });
+
           // Sync the parent component's active state if different
           if (state.active !== active) {
             onToggle(state.active);
@@ -62,7 +78,7 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
     } finally {
       setIsLoading(false);
     }
-  }, [active, onToggle]);
+  }, [active, onToggle, updateFromServer, setIsLoading]);
 
   // Función para enviar webhook a través de nuestra API route
   const sendWebhookToN8n = async (status: boolean) => {
@@ -113,10 +129,11 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
     }
   };
 
-  // Fetch current state on component mount
+  // Sincronizar con servidor al montar (en background)
+  // El estado del store se muestra inmediatamente, así que no hay flash
   useEffect(() => {
     fetchCurrentState();
-  }, [fetchCurrentState]);
+  }, []);  // Solo al montar, no al actualizar
 
   // Connection progress animation (only for visual feedback during activation)
   useEffect(() => {
