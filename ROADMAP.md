@@ -107,24 +107,32 @@ Visualizar toda la flota en un mapa interactivo con posiciones GPS en tiempo rea
 - [x] Crear componente base `<FleetMap />`
 
 #### 2.2 Visualización de Vehículos ✅
-- [x] Marcadores customizados por vehículo (iconos de bus con DivIcon)
+- [x] Marcadores customizados por vehículo (iconos de bus con DivIcon + gradientes)
 - [x] Color según estado:
-  - 🟢 Verde: normal
-  - 🟡 Amarillo: advertencia
-  - 🔴 Rojo: alerta crítica
-  - ⚫ Gris: offline
-- [x] Popup con info al hacer click:
-  - [x] Velocidad actual
-  - [~] Fuel level (pendiente - agregar en próxima iteración)
-  - [~] Temperatura (pendiente - agregar en próxima iteración)
-  - [~] Última alerta (pendiente - agregar en próxima iteración)
-  - [x] Botón "Ver detalles"
+  - 🟢 Verde: normal (gradiente green-400 to green-600)
+  - 🟡 Amarillo: advertencia (gradiente yellow-400 to orange-500)
+  - 🔴 Rojo: alerta crítica (gradiente red-500 to red-700 + animación ping)
+  - ⚫ Gris: offline (gradiente gray-400 to gray-600)
+- [x] Popup rediseñado con info al hacer click:
+  - [x] Header con gradiente azul-indigo
+  - [x] Velocidad actual con ícono
+  - [x] Coordenadas GPS en formato mono
+  - [x] Timestamp de última actualización
+  - [x] Botón "Ver Detalles Completos" con gradiente
+- [x] Estadísticas en tiempo real en header del mapa
+- [x] Badges mejorados con gradientes e iconos (✓, ⚠, ⚡, ⏸)
+- [x] Efecto hover en marcadores (scale-110)
 
 #### 2.3 Actualización en Tiempo Real ✅
 - [x] Implementar polling cada 5 segundos
 - [~] O usar Supabase Realtime (subscripción a vehicle_stats) - alternativa futura
-- [ ] Smooth transitions entre posiciones (animate markers)
+- [~] Smooth transitions entre posiciones (animate markers) - mejora opcional para Fase 2.4+
 - [x] Optimizar queries (solo últimas posiciones por vehículo)
+- [x] Corregir re-renderizado de marcadores (keys dinámicos con lat/lng)
+- [x] Corregir parsing de coordenadas GPS (parseFloat para numeric type)
+- [x] Optimizar MapController (fitBounds solo una vez al inicializar)
+
+**✅ Fase 2.1-2.3 COMPLETADAS** con diseño profesional mejorado (gradientes, iconos, animaciones, estadísticas en tiempo real)
 
 #### 2.4 Rutas Históricas
 - [ ] Endpoint `GET /api/vehicles/{id}/route?from=timestamp&to=timestamp`
@@ -141,9 +149,9 @@ Visualizar toda la flota en un mapa interactivo con posiciones GPS en tiempo rea
 ### Criterios de Éxito
 - ✅ Todos los vehículos visibles en mapa
 - ✅ Posiciones actualizadas en tiempo real
-- ✅ Click en vehículo muestra info detallada
-- ✅ Rutas históricas se pueden visualizar
-- ✅ Performance: < 100ms para actualizar posiciones
+- ✅ Click en vehículo muestra info detallada (popup rediseñado con gradientes)
+- [ ] Rutas históricas se pueden visualizar (pendiente - Fase 2.4)
+- ✅ Performance: < 100ms para actualizar posiciones (polling optimizado)
 
 ### Estimado
 **Tiempo:** 4-6 días
