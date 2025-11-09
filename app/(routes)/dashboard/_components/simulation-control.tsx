@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Play, Pause, Settings, Wifi, Activity, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -25,7 +25,17 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
   const [isSendingWebhook, setIsSendingWebhook] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Ref para mantener el estado actual de active (para el cleanup)
+  const activeRef = useRef(active);
+  const tenantRef = useRef(tenant);
+
   const totalSensors = 127;
+
+  // Actualizar refs cuando cambian los valores
+  useEffect(() => {
+    activeRef.current = active;
+    tenantRef.current = tenant;
+  }, [active, tenant]);
 
   // Función para obtener el estado actual desde el backend
   const fetchCurrentState = useCallback(async () => {
@@ -154,8 +164,9 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
   // Cleanup: detener simulación cuando el componente se desmonta (usuario cierra página)
   useEffect(() => {
     return () => {
-      // Si la simulación está activa cuando se desmonta el componente
-      if (active) {
+      // Usar refs para obtener el valor más reciente de active y tenant
+      // Esto evita que el cleanup se ejecute cuando active cambia
+      if (activeRef.current) {
         console.log('[SimulationControl] Component unmounting, stopping simulation...');
 
         // Detener simulación en el servidor
@@ -167,7 +178,7 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
           body: JSON.stringify({
             status: 'desactivado',
             sensor_count: 0,
-            tenant: tenant,
+            tenant: tenantRef.current,
             config: {
               vehicles: [],
               interval: 0,
@@ -181,7 +192,8 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
         });
       }
     };
-  }, [active, tenant]);
+    // Array vacío = solo ejecutar cleanup al desmontar, NO cuando active cambia
+  }, []);
 
   const handleToggle = () => {
     const newState = !active;
