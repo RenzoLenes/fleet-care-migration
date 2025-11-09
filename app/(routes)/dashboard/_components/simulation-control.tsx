@@ -18,9 +18,9 @@ interface SimulationControlProps {
 }
 
 export function SimulationControl({ active, onToggle, tenant }: SimulationControlProps) {
-  const [dataFlow, setDataFlow] = useState(active);
-  const [activeSensors, setActiveSensors] = useState(active ? 98 : 0);
-  const [connectionProgress, setConnectionProgress] = useState(active ? 100 : 0);
+  const [dataFlow, setDataFlow] = useState(false);  // Inicializar en false hasta consultar servidor
+  const [activeSensors, setActiveSensors] = useState(0);  // Inicializar en 0
+  const [connectionProgress, setConnectionProgress] = useState(0);  // Inicializar en 0
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSendingWebhook, setIsSendingWebhook] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -118,22 +118,7 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
     fetchCurrentState();
   }, [fetchCurrentState]);
 
-  useEffect(() => {
-    if (!isLoading) {
-      if (active) {
-        setDataFlow(true);
-        setActiveSensors(98);
-        setConnectionProgress(100);
-        setIsConnecting(false);
-      } else {
-        setDataFlow(false);
-        setActiveSensors(0);
-        setConnectionProgress(0);
-        setIsConnecting(false);
-      }
-    }
-  }, [active, isLoading]);
-
+  // Connection progress animation (only for visual feedback during activation)
   useEffect(() => {
     if (active && !dataFlow && connectionProgress < 100) {
       setIsConnecting(true);
@@ -153,11 +138,6 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
       }, 200);
 
       return () => clearInterval(interval);
-    } else if (!active) {
-      setDataFlow(false);
-      setActiveSensors(0);
-      setConnectionProgress(0);
-      setIsConnecting(false);
     }
   }, [active, dataFlow, connectionProgress]);
 
