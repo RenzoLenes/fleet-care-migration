@@ -70,8 +70,8 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
           tenant: tenant,
           config: {
             vehicles: ["BUS-001", "BUS-002", "BUS-003", "BUS-004", "BUS-005"],
-            interval: 5,
-            duration: 5
+            interval: 5,    // Genera datos cada 5 segundos
+            duration: 0     // 0 = ilimitado (hasta que usuario lo detenga)
           }
 
         })
