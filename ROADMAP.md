@@ -63,11 +63,13 @@ Integrar un LLM (OpenAI o4-mini) como "mecánico experto" para analizar datos de
 #### 1.4 Integración con Alertas
 - [ ] Modificar `lib/iot-simulator.ts` para llamar LLM en alertas
 - [ ] Nuevo endpoint `POST /api/alerts/analyze`
-- [ ] Agregar campos a tabla alerts:
-  - `llm_diagnosis` (text)
-  - `llm_recommendations` (jsonb)
-  - `llm_severity` (enum: low, medium, high, critical)
-  - `llm_cost` (numeric) - tracking de costos
+- [x] Agregar campos a tabla alerts:
+  - [x] `llm_diagnosis` (text)
+  - [x] `llm_recommendations` (jsonb)
+  - [x] `llm_severity` (text: low, medium, high, critical)
+  - [x] `llm_cost` (numeric) - tracking de costos
+  - [x] `llm_tokens` (integer) - tokens usados
+  - [x] `llm_cached` (boolean) - si usó cache
 - [ ] UI para mostrar diagnóstico LLM en tarjeta de alerta
 
 #### 1.5 Sistema de Fallback
