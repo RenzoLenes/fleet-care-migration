@@ -93,38 +93,38 @@ Integrar un LLM (OpenAI gpt-4o-mini) como "mecánico experto" para analizar dato
 
 ---
 
-## 🗺️ Fase 2: Mapa en Tiempo Real
+## 🗺️ Fase 2: Mapa en Tiempo Real (EN PROGRESO)
 
 ### Objetivo
 Visualizar toda la flota en un mapa interactivo con posiciones GPS en tiempo real y tracking de rutas.
 
 ### Tareas Técnicas
 
-#### 2.1 Configuración de Mapas
-- [ ] Evaluar opciones: Mapbox vs Leaflet vs Google Maps
-- [ ] Instalar dependencias (`mapbox-gl` o `react-leaflet`)
-- [ ] Configurar API keys
-- [ ] Crear componente base `<FleetMap />`
+#### 2.1 Configuración de Mapas ✅
+- [x] Evaluar opciones: Mapbox vs Leaflet vs Google Maps (✅ Elegido: Leaflet + OSM)
+- [x] Instalar dependencias (`react-leaflet`, `leaflet`, `@types/leaflet`)
+- [x] Configurar API keys (✅ No requiere - OSM es gratis)
+- [x] Crear componente base `<FleetMap />`
 
-#### 2.2 Visualización de Vehículos
-- [ ] Marcadores customizados por vehículo (iconos de bus)
-- [ ] Color según estado:
+#### 2.2 Visualización de Vehículos ✅
+- [x] Marcadores customizados por vehículo (iconos de bus con DivIcon)
+- [x] Color según estado:
   - 🟢 Verde: normal
   - 🟡 Amarillo: advertencia
   - 🔴 Rojo: alerta crítica
   - ⚫ Gris: offline
-- [ ] Popup con info al hacer click:
-  - Velocidad actual
-  - Fuel level
-  - Temperatura
-  - Última alerta
-  - Botón "Ver detalles"
+- [x] Popup con info al hacer click:
+  - [x] Velocidad actual
+  - [~] Fuel level (pendiente - agregar en próxima iteración)
+  - [~] Temperatura (pendiente - agregar en próxima iteración)
+  - [~] Última alerta (pendiente - agregar en próxima iteración)
+  - [x] Botón "Ver detalles"
 
-#### 2.3 Actualización en Tiempo Real
-- [ ] Implementar polling cada 5 segundos
-- [ ] O usar Supabase Realtime (subscripción a vehicle_stats)
+#### 2.3 Actualización en Tiempo Real ✅
+- [x] Implementar polling cada 5 segundos
+- [~] O usar Supabase Realtime (subscripción a vehicle_stats) - alternativa futura
 - [ ] Smooth transitions entre posiciones (animate markers)
-- [ ] Optimizar queries (solo últimas posiciones)
+- [x] Optimizar queries (solo últimas posiciones por vehículo)
 
 #### 2.4 Rutas Históricas
 - [ ] Endpoint `GET /api/vehicles/{id}/route?from=timestamp&to=timestamp`
