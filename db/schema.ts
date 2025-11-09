@@ -1,4 +1,4 @@
-import { pgTable, text, uuid, timestamp, integer, numeric, jsonb, varchar } from 'drizzle-orm/pg-core';
+import { pgTable, text, uuid, timestamp, integer, numeric, jsonb, varchar, boolean } from 'drizzle-orm/pg-core';
 
 // Tabla tenants
 export const tenants = pgTable('tenants', {
