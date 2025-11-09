@@ -142,25 +142,28 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
   };
 
   // Sincronizar con servidor al montar (solo UNA vez)
-  // El estado de localStorage se muestra inmediatamente, sin flash
+  // IMPORTANTE: NO sobrescribir si el usuario tiene estado guardado en localStorage
+  // porque el SimulationManager puede perder su estado en hot reloads de desarrollo
   useEffect(() => {
     console.log('[SimulationControl] Component mounted, current Zustand state:', { dataFlow, activeSensors });
 
-    // Sync silencioso - no muestra loading, no bloquea UI
-    const syncWithServer = async () => {
-      try {
-        const response = await fetch('/api/simulation');
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success && result.state) {
-            const state = result.state;
+    // Solo sincronizar si el estado local está en "inicial" (nunca activado)
+    // Si dataFlow es true (de localStorage), confiar en el estado local
+    if (!dataFlow && activeSensors === 0) {
+      console.log('[SimulationControl] Initial state detected, syncing with server');
 
-            console.log('[SimulationControl] Server state:', state);
-            console.log('[SimulationControl] Current Zustand state before sync:', { dataFlow, activeSensors });
+      // Sync silencioso - no muestra loading, no bloquea UI
+      const syncWithServer = async () => {
+        try {
+          const response = await fetch('/api/simulation');
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success && result.state) {
+              const state = result.state;
 
-            // Solo actualizar si el servidor tiene un estado diferente
-            if (state.dataFlow !== dataFlow || state.activeSensors !== activeSensors) {
-              console.log('[SimulationControl] State mismatch detected, updating from server');
+              console.log('[SimulationControl] Server state:', state);
+
+              // Actualizar desde servidor solo en carga inicial
               updateFromServer({
                 active: state.active,
                 dataFlow: state.dataFlow,
@@ -172,17 +175,18 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
               if (state.active !== active) {
                 onToggle(state.active);
               }
-            } else {
-              console.log('[SimulationControl] State matches server, no update needed');
             }
           }
+        } catch (error) {
+          console.error('[SimulationControl] Error fetching simulation state:', error);
         }
-      } catch (error) {
-        console.error('[SimulationControl] Error fetching simulation state:', error);
-      }
-    };
+      };
 
-    syncWithServer();
+      syncWithServer();
+    } else {
+      console.log('[SimulationControl] State loaded from localStorage, skipping server sync to preserve user state');
+      console.log('[SimulationControl] To force sync with server, user must manually toggle simulation');
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);  // Solo al montar, sin dependencies que causen re-ejecución
 
