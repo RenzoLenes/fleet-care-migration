@@ -37,17 +37,17 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
   // Estado local solo para animación (no necesita persistir)
   const [connectionProgress, setConnectionProgress] = useState(0);
 
-  // Ref para mantener el estado actual de active (para el cleanup)
-  const activeRef = useRef(active);
+  // Ref para mantener el estado actual de dataFlow (para el cleanup)
+  const dataFlowRef = useRef(dataFlow);
   const tenantRef = useRef(tenant);
 
   const totalSensors = 127;
 
   // Actualizar refs cuando cambian los valores
   useEffect(() => {
-    activeRef.current = active;
+    dataFlowRef.current = dataFlow;
     tenantRef.current = tenant;
-  }, [active, tenant]);
+  }, [dataFlow, tenant]);
 
   // Función para obtener el estado actual desde el backend
   const fetchCurrentState = useCallback(async () => {
@@ -142,10 +142,7 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
 
   // Connection progress animation (only for visual feedback during activation)
   useEffect(() => {
-    if (active && !dataFlow && connectionProgress < 100) {
-      setIsConnecting(true);
-      setConnectionProgress(0);
-
+    if (isConnecting && connectionProgress < 100) {
       const interval = setInterval(() => {
         setConnectionProgress(prev => {
           if (prev >= 100) {
@@ -161,14 +158,14 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
 
       return () => clearInterval(interval);
     }
-  }, [active, dataFlow, connectionProgress]);
+  }, [isConnecting, connectionProgress, setIsConnecting, setDataFlow, setActiveSensors]);
 
   // Cleanup: detener simulación SOLO cuando usuario cierra/refresca página
   // NO se ejecuta al navegar internamente (ej: ir a /alerts)
   useEffect(() => {
     const handleBeforeUnload = () => {
-      // Solo ejecutar si la simulación está activa
-      if (activeRef.current) {
+      // Solo ejecutar si la simulación está activa (usar dataFlow de Zustand)
+      if (dataFlowRef.current) {
         console.log('[SimulationControl] Page unloading, stopping simulation...');
 
         // Detener simulación en el servidor
@@ -201,7 +198,7 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
   }, []);
 
   const handleToggle = () => {
-    const newState = !active;
+    const newState = !dataFlow;  // Usar estado de Zustand, no prop del padre
 
     if (!newState) {
       toast('¿Desactivar simulación?', {
@@ -209,6 +206,10 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
         action: {
           label: 'Confirmar',
           onClick: async () => {
+            // Actualizar Zustand store inmediatamente para feedback visual
+            setDataFlow(false);
+            setActiveSensors(0);
+
             onToggle(newState);
             await sendWebhookToN8n(newState);
             // Refresh state after successful webhook
@@ -224,6 +225,10 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
         }
       });
     } else {
+      // Actualizar Zustand store inmediatamente para feedback visual
+      setIsConnecting(true);
+      setConnectionProgress(0);
+
       onToggle(newState);
       sendWebhookToN8n(newState).then(() => {
         // Refresh state after successful webhook
@@ -237,13 +242,13 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
 
   const getStatusColor = () => {
     if (isConnecting) return 'bg-yellow-500';
-    if (active && dataFlow) return 'bg-green-500';
+    if (dataFlow) return 'bg-green-500';  // Solo usar Zustand state
     return 'bg-gray-400';
   };
 
   const getStatusText = () => {
     if (isConnecting) return 'Conectando...';
-    if (active && dataFlow) return 'Activo';
+    if (dataFlow) return 'Activo';  // Solo usar Zustand state
     return 'Inactivo';
   };
 
@@ -270,7 +275,7 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
             <Badge
               className={`rounded-full px-3 py-1 font-semibold ${isConnecting
                 ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
-                : active && dataFlow
+                : dataFlow
                   ? 'bg-green-100 text-green-800 border-green-200'
                   : 'bg-gray-100 text-gray-800 border-gray-200'
                 }`}
@@ -287,7 +292,7 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
               <div className={`p-3 rounded-lg shadow-md ${getStatusColor()}`}>
                 {isConnecting ? (
                   <Activity className="h-5 w-5 text-white animate-pulse" />
-                ) : active ? (
+                ) : dataFlow ? (
                   <Play className="h-5 w-5 text-white" />
                 ) : (
                   <Pause className="h-5 w-5 text-white" />
@@ -295,16 +300,16 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
               </div>
               <div>
                 <p className="font-semibold text-gray-800">
-                  {isConnecting ? 'Estableciendo conexión...' : active ? "Simulación activa" : "Simulación pausada"}
+                  {isConnecting ? 'Estableciendo conexión...' : dataFlow ? "Simulación activa" : "Simulación pausada"}
                 </p>
                 <p className="text-sm text-gray-600">
-                  {isConnecting ? 'Configurando sensores' : active ? "Recibiendo datos en tiempo real" : "Flujos de datos detenidos"}
+                  {isConnecting ? 'Configurando sensores' : dataFlow ? "Recibiendo datos en tiempo real" : "Flujos de datos detenidos"}
                 </p>
               </div>
             </div>
             <Switch
               className='fleetcare-switch'
-              checked={active}
+              checked={dataFlow}
               onCheckedChange={handleToggle}
               disabled={isConnecting || isSendingWebhook || isLoading}
             />
@@ -369,7 +374,7 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
           </div>
 
           {/* Información de Persistencia */}
-          {active && (
+          {dataFlow && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -385,7 +390,7 @@ export function SimulationControl({ active, onToggle, tenant }: SimulationContro
           )}
 
           {/* Métricas Adicionales */}
-          {active && dataFlow && (
+          {dataFlow && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
